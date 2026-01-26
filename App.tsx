@@ -22,6 +22,14 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      const timeout = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [copied]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -33,6 +41,13 @@ const App: React.FC = () => {
     };
     initAuth();
   }, []);
+
+  const handleCopyKey = () => {
+    if (recoveryKey) {
+      navigator.clipboard.writeText(recoveryKey);
+      setCopied(true);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -78,6 +93,7 @@ const App: React.FC = () => {
     setProgress(0);
     setError(null);
     setRecoveryKey(null);
+    setCopied(false);
   };
 
   const isInstalling = viewMode === ViewMode.INSTALLATION;
@@ -136,14 +152,61 @@ const App: React.FC = () => {
           {viewMode === ViewMode.DEPOSIT && (
             <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
               {status === AppStatus.SUCCESS && (
-                <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-2xl text-center">
-                  <p className="text-green-400 text-sm font-bold">Transmission successful.</p>
-                  <button
-                    onClick={reset}
-                    className="mt-1 text-xs text-green-300/80 font-bold underline underline-offset-4"
-                  >
-                    Upload another asset
-                  </button>
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-2xl text-center">
+                    <p className="text-green-400 text-sm font-bold">Transmission successful.</p>
+                  </div>
+
+                  {recoveryKey && (
+                    <div className="p-5 bg-slate-950/80 border border-blue-500/30 rounded-2xl space-y-3">
+                      <div className="flex items-center gap-2 text-blue-400 justify-center">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        <span className="text-xs font-black uppercase tracking-widest">Vault Access Key</span>
+                      </div>
+                      <div
+                        onClick={handleCopyKey}
+                        className="group relative bg-slate-900 rounded-lg p-3 border border-slate-700 font-mono text-center text-white font-bold tracking-wider cursor-pointer hover:border-blue-500/50 hover:bg-slate-800 transition-all active:scale-[0.98]"
+                      >
+                        {recoveryKey}
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {copied ? (
+                            <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-center">
+                        <button
+                          onClick={handleCopyKey}
+                          className={`text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full transition-all ${copied
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                            }`}
+                        >
+                          {copied ? 'Copied to Clipboard' : 'Current Key: Tap to Copy'}
+                        </button>
+                      </div>
+                      <p className="text-center text-[10px] text-red-400 font-bold uppercase tracking-wide opacity-80 pt-2">
+                        ⚠️ Save this key now.<br />It is the ONLY way to retrieve this file.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="text-center">
+                    <button
+                      onClick={reset}
+                      className="mt-1 text-xs text-green-300/80 font-bold underline underline-offset-4"
+                    >
+                      Upload another asset
+                    </button>
+                  </div>
                 </div>
               )}
 
