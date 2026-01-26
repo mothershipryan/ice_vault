@@ -37,10 +37,12 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state 
         .select('city')
         .eq('state_full', state) // Match full state name from StateSelector
         .ilike('city', `${value}%`)
-        .limit(5);
+        .limit(50); // Fetch more to allow for filtering duplicates
 
       if (!error && data) {
-        setSuggestions(data.map((c: any) => c.city));
+        // Filter unique city names (case-insensitive)
+        const uniqueCities = Array.from(new Set(data.map((c: any) => c.city)));
+        setSuggestions(uniqueCities.slice(0, 5));
         setShowSuggestions(true);
       }
     };
