@@ -186,8 +186,8 @@ const App: React.FC = () => {
                         <button
                           onClick={handleCopyKey}
                           className={`text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full transition-all ${copied
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
                             }`}
                         >
                           {copied ? 'Copied to Clipboard' : 'Current Key: Tap to Copy'}
@@ -227,6 +227,7 @@ const App: React.FC = () => {
                   value={selectedCity}
                   onChange={setSelectedCity}
                   disabled={status === AppStatus.UPLOADING}
+                  state={selectedState}
                 />
 
                 <DatePicker

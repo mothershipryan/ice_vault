@@ -54,7 +54,7 @@ const RetrievalModule: React.FC = () => {
         </div>
 
         <StateSelector value={state} onChange={setState} />
-        <CityInput value={city} onChange={setCity} />
+        <CityInput value={city} onChange={setCity} state={state} />
         <DatePicker value={date} onChange={setDate} />
 
         <button
