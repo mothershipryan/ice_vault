@@ -1,0 +1,7 @@
+{
+  "name": "FUCK I.C.E. Vault",
+  "description": "A sleek, secure video vault for uploading and organizing footage by state and date. Fully functional as a Progressive Web App (PWA).",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
