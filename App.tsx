@@ -242,6 +242,7 @@ const App: React.FC = () => {
                   onChange={setSelectedCity}
                   disabled={status === AppStatus.UPLOADING}
                   state={selectedState}
+                  stateName={selectedStateName}
                 />
 
                 <DatePicker

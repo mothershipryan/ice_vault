@@ -7,9 +7,10 @@ interface CityInputProps {
   onChange: (city: string) => void;
   disabled?: boolean;
   state: string;
+  stateName?: string;
 }
 
-const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state }) => {
+const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state, stateName }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -33,10 +34,11 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state 
           return;
         }
 
+        // Try matching against state_code using either the code OR the full name
         const { data, error } = await supabase
           .from('cities')
           .select('name')
-          .eq('state_code', state)
+          .or(`state_code.eq."${state}",state_code.eq."${stateName}"`)
           .ilike('name', `${value}%`)
           .limit(50);
 
