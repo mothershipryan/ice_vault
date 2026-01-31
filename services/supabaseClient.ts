@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Hardcoded fallback to bypass any stale VITE_SUPABASE_URL cache
-const CORRECT_URL = 'https://mepaapbfnwpiysccbvds.supabase.co';
+// HARD OVERRIDE: Forced to the new working project to bypass stale Vercel caches
+const FORCED_URL = 'https://mepaapbfnwpiysccbvds.supabase.co';
+const FORCED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lcGFhcGJmbndwaXlzY2NidmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4Njc1MjUsImV4cCI6MjA4NTQ0MzUyNX0.5iBezcUApFOvsvAQK9oqBXD8_57dK5bsJh51v3R8WP0';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || CORRECT_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = FORCED_URL;
+const supabaseAnonKey = FORCED_KEY;
 
-console.log('Force Direct Supabase URL:', supabaseUrl);
+console.log('Force Linking Active:', supabaseUrl);
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey || '');
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
