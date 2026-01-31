@@ -68,6 +68,17 @@
   <script type="module" src="/index.tsx"></script>
 
   <script>
+    // Force a deep purge if we add ?reset=true to the URL
+    if (window.location.search.includes('reset=true')) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+      localStorage.clear();
+      sessionStorage.clear();
+      indexedDB.databases().then(dbs => dbs.forEach(db => indexedDB.deleteDatabase(db.name)));
+      window.location.href = window.location.origin;
+    }
+
+    // Commented out Service Worker for development to prevent caching old project credentials
+    /*
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -75,6 +86,7 @@
           .catch(err => console.log('Service Worker registration failed', err));
       });
     }
+    */
   </script>
 
 </body>

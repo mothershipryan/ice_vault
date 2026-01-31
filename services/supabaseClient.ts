@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+// Hardcoded fallback to bypass any stale VITE_SUPABASE_URL cache
+const CORRECT_URL = 'https://mepaapbfnwpiysccbvds.supabase.co';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || CORRECT_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  // We don't throw error here to allow app to load, but services should check
-  console.warn('Missing Supabase Environment Variables');
-}
+console.log('Force Direct Supabase URL:', supabaseUrl);
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+export const supabase = createClient(supabaseUrl, supabaseAnonKey || '');
