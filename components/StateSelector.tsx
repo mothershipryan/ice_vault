@@ -1,14 +1,33 @@
 
-import React from 'react';
-import { US_STATES } from '../constants.ts';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../services/supabaseClient.ts';
 
 interface StateSelectorProps {
-  value: string;
-  onChange: (state: string) => void;
+  value: string; // This will be the code
+  onChange: (stateCode: string, stateName: string) => void;
   disabled?: boolean;
 }
 
 const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled }) => {
+  const [states, setStates] = useState<{ name: string; state_code: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchStates = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('states')
+        .select('name, state_code')
+        .order('name');
+
+      if (!error && data) {
+        setStates(data);
+      }
+      setLoading(false);
+    };
+    fetchStates();
+  }, []);
+
   return (
     <div className="flex flex-col gap-2">
       <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
@@ -17,14 +36,21 @@ const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled
       <div className="relative">
         <select
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
+          onChange={(e) => {
+            const selected = states.find(s => s.state_code === e.target.value);
+            if (selected) {
+              onChange(selected.state_code, selected.name);
+            }
+          }}
+          disabled={disabled || loading}
           className="w-full h-[64px] bg-slate-900/50 border border-slate-700 text-white rounded-2xl px-5 appearance-none focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all disabled:opacity-50 text-sm font-bold shadow-sm"
         >
-          <option value="" disabled className="bg-slate-900">Select State</option>
-          {US_STATES.map((state) => (
-            <option key={state} value={state} className="bg-slate-900">
-              {state}
+          <option value="" disabled className="bg-slate-900">
+            {loading ? 'Fetching States...' : 'Select State'}
+          </option>
+          {states.map((state) => (
+            <option key={state.state_code} value={state.state_code} className="bg-slate-900">
+              {state.name}
             </option>
           ))}
         </select>

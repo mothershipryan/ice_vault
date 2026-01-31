@@ -15,6 +15,7 @@ import { AppStatus, ViewMode } from './types.ts';
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DEPOSIT);
   const [selectedState, setSelectedState] = useState<string>('');
+  const [selectedStateName, setSelectedStateName] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [file, setFile] = useState<File | null>(null);
@@ -73,7 +74,7 @@ const App: React.FC = () => {
       setError(null);
       const result = await storageService.uploadVideo(
         file,
-        selectedState,
+        selectedStateName || selectedState, // Use name if available
         selectedCity,
         selectedDate,
         (p) => setProgress(p)
@@ -228,7 +229,11 @@ const App: React.FC = () => {
               <div className="space-y-6">
                 <StateSelector
                   value={selectedState}
-                  onChange={setSelectedState}
+                  onChange={(code, name) => {
+                    setSelectedState(code);
+                    setSelectedStateName(name);
+                    setSelectedCity('');
+                  }}
                   disabled={status === AppStatus.UPLOADING}
                 />
 

@@ -34,14 +34,14 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state 
 
       const { data, error } = await supabase
         .from('cities')
-        .select('city')
-        .eq('state_full', state) // Match full state name from StateSelector
-        .ilike('city', `${value}%`)
-        .limit(50); // Fetch more to allow for filtering duplicates
+        .select('name')
+        .eq('state_code', state) // state prop is now the code from StateSelector
+        .ilike('name', `${value}%`)
+        .limit(50);
 
       if (!error && data) {
         // Filter unique city names (case-insensitive)
-        const uniqueCities = Array.from(new Set(data.map((c: any) => c.city)));
+        const uniqueCities = Array.from(new Set(data.map((c: any) => c.name)));
         setSuggestions(uniqueCities.slice(0, 5));
         setShowSuggestions(true);
       }
