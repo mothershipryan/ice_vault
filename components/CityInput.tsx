@@ -43,20 +43,20 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
 
         const { data, error } = await supabase
           .from('cities')
-          .select('name')
-          .or(`state_code.eq."${state}",state_code.eq."${stateName}"`)
-          .ilike('name', `${value}%`)
+          .select('city')
+          .or(`state_id.eq."${state}",state_name.eq."${stateName}"`) // Match code (NY) or name (New York)
+          .ilike('city', `${value}%`)
           .limit(10);
 
         if (error) {
           return;
         }
 
-        const uniqueCities = Array.from(new Set(data?.map((c: any) => c.name) || []));
+        const uniqueCities = Array.from(new Set(data?.map((c: any) => c.city) || []));
         setSuggestions(uniqueCities.slice(0, 5));
         setShowSuggestions(true);
       } catch (err) {
-        // Silently fail in production for a smoother experience
+        // Silently fail in production
       } finally {
         setLoading(false);
       }
