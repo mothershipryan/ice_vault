@@ -2,7 +2,7 @@
   "name": "FUCK I.C.E. Vault Video Storage",
   "short_name": "FUCK I.C.E. Vault",
   "description": "Secure, sleek video storage for state-captured footage.",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
