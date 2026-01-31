@@ -49,16 +49,14 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
           .limit(10);
 
         if (error) {
-          setErrorStatus(error.message);
           return;
         }
 
         const uniqueCities = Array.from(new Set(data?.map((c: any) => c.name) || []));
         setSuggestions(uniqueCities.slice(0, 5));
         setShowSuggestions(true);
-        setErrorStatus(null);
       } catch (err) {
-        setErrorStatus('Fetch error');
+        // Silently fail in production for a smoother experience
       } finally {
         setLoading(false);
       }
@@ -79,16 +77,6 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
         <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase">
           City / Municipality
         </label>
-        {loading && (
-          <span className="text-[9px] text-blue-400/60 font-medium animate-pulse uppercase tracking-wider">
-            Searching...
-          </span>
-        )}
-        {errorStatus && !loading && (
-          <span className="text-[9px] text-red-400/60 font-medium uppercase tracking-tighter">
-            {errorStatus.substring(0, 20)}...
-          </span>
-        )}
       </div>
       <div className="relative">
         <input

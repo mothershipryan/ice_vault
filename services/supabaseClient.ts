@@ -7,6 +7,4 @@ const FORCED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const supabaseUrl = FORCED_URL;
 const supabaseAnonKey = FORCED_KEY;
 
-console.log('Force Linking Active:', supabaseUrl);
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
