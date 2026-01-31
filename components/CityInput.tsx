@@ -13,6 +13,7 @@ interface CityInputProps {
 const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state, stateName }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -37,15 +38,13 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
           return;
         }
 
-        const orFilters = [`state_code.eq."${state}"`];
-        if (stateName && stateName !== state) {
-          orFilters.push(`state_code.eq."${stateName}"`);
-        }
+        setLoading(true);
+        setErrorStatus(null);
 
         const { data, error } = await supabase
           .from('cities')
           .select('name')
-          .or(orFilters.join(','))
+          .or(`state_code.eq."${state}",state_code.eq."${stateName}"`)
           .ilike('name', `${value}%`)
           .limit(10);
 
@@ -54,18 +53,18 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
           return;
         }
 
-        if (data) {
-          const uniqueCities = Array.from(new Set(data.map((c: any) => c.name)));
-          setSuggestions(uniqueCities.slice(0, 5));
-          setShowSuggestions(true);
-          setErrorStatus(null);
-        }
+        const uniqueCities = Array.from(new Set(data?.map((c: any) => c.name) || []));
+        setSuggestions(uniqueCities.slice(0, 5));
+        setShowSuggestions(true);
+        setErrorStatus(null);
       } catch (err) {
-        setErrorStatus('Fetch failed');
+        setErrorStatus('Fetch error');
+      } finally {
+        setLoading(false);
       }
     };
 
-    const timeoutId = setTimeout(fetchCities, 300);
+    const timeoutId = setTimeout(fetchCities, 400);
     return () => clearTimeout(timeoutId);
   }, [value, state, stateName]);
 
@@ -80,9 +79,14 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
         <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase">
           City / Municipality
         </label>
-        {errorStatus && (
+        {loading && (
+          <span className="text-[9px] text-blue-400/60 font-medium animate-pulse uppercase tracking-wider">
+            Searching...
+          </span>
+        )}
+        {errorStatus && !loading && (
           <span className="text-[9px] text-red-400/60 font-medium uppercase tracking-tighter">
-            DB Error: {errorStatus.substring(0, 20)}...
+            {errorStatus.substring(0, 20)}...
           </span>
         )}
       </div>
