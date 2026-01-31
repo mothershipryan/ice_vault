@@ -15,7 +15,7 @@ const AboutCard: React.FC = () => {
       <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 relative overflow-hidden group">
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500" />
-        
+
         <div className="relative z-10 space-y-5">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-400/20">
@@ -25,16 +25,16 @@ const AboutCard: React.FC = () => {
             </div>
             <h3 className="text-white text-lg font-black tracking-tight uppercase">About I.C.E. Vault</h3>
           </div>
-          
+
           <div className="space-y-4">
             <p className="text-slate-400 text-xs md:text-sm leading-relaxed font-medium">
-              ICE Vault is a web application designed to serve as an immutable digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured in the cloud. This architecture is built specifically to prevent the loss or destruction of evidence.
+              ICE Vault is a web application designed to serve as an immutable digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence.
             </p>
             <p className="text-slate-400 text-xs md:text-sm leading-relaxed font-medium">
-              We guarantee <strong>zero-knowledge privacy</strong> by leveraging <strong>European infrastructure</strong>. All data is processed by <strong>Supabase</strong> and stored in <strong>Filen</strong> on servers physically located in <strong>Germany</strong>. 
+              We guarantee <strong>zero-knowledge privacy</strong> by leveraging <strong>Swiss infrastructure</strong>, renowned for the world’s strongest data protection laws. All data is processed by <strong>Supabase</strong> and secured via <strong>Infomaniak</strong> on high-security servers physically located in <strong>Switzerland</strong>.
             </p>
             <p className="text-slate-400 text-xs md:text-sm leading-relaxed font-medium">
-              <strong>Retrieval Protocol:</strong> Assets can be retrieved through our German retrieval terminal. Use the State, City, and Date of capture to locate encrypted evidence. Each file includes a unique <strong>SHA-256 Hash</strong> for legal verification, ensuring the footage remains untampered and admissible as court-ready evidence.
+              <strong>Retrieval Protocol:</strong> Assets can be retrieved through our <strong>Swiss Retrieval Terminal</strong>. Use the State, City, and Date of capture to locate encrypted evidence. Each file is secured with a unique <strong>SHA-256 Hash</strong> for legal verification, ensuring the footage remains untampered, mathematically verified, and admissible as court-ready evidence.
             </p>
           </div>
 
@@ -45,7 +45,7 @@ const AboutCard: React.FC = () => {
                 <div className="w-1 h-1 rounded-full bg-blue-400" />
                 <div className="w-1 h-1 rounded-full bg-blue-400" />
               </div>
-              <span className="text-[8px] text-slate-500 font-mono tracking-widest uppercase">EU Privacy Shield // Verifiable Evidence</span>
+              <span className="text-[8px] text-slate-500 font-mono tracking-widest uppercase">CH Privacy Jurisdiction // Verifiable Evidence</span>
             </div>
           </div>
         </div>
