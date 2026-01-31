@@ -13,6 +13,7 @@ interface CityInputProps {
 const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state, stateName }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Close suggestions on click outside
@@ -31,33 +32,30 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
       try {
         if (!state || !value || value.length < 2) {
           setSuggestions([]);
+          setErrorStatus(null);
           return;
         }
 
-        console.log(`Searching for cities in state: ${state} (${stateName}) matching: ${value}`);
-
-        // Try matching against state_code using either the code OR the full name
-        // Use quotes to handle states with spaces (e.g., "New York")
         const { data, error } = await supabase
           .from('cities')
           .select('name')
           .or(`state_code.eq."${state}",state_code.eq."${stateName}"`)
           .ilike('name', `${value}%`)
-          .limit(50);
+          .limit(10);
 
         if (error) {
-          console.error('Supabase Error fetching cities:', error.message, error.details);
+          setErrorStatus(error.message);
           return;
         }
 
         if (data) {
-          console.log(`Found ${data.length} potential matches`);
           const uniqueCities = Array.from(new Set(data.map((c: any) => c.name)));
           setSuggestions(uniqueCities.slice(0, 5));
           setShowSuggestions(true);
+          setErrorStatus(null);
         }
       } catch (err) {
-        console.error('Unexpected error fetching cities:', err);
+        setErrorStatus('Fetch failed');
       }
     };
 
@@ -72,9 +70,16 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
 
   return (
     <div className="flex flex-col gap-2" ref={wrapperRef}>
-      <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
-        City / Municipality
-      </label>
+      <div className="flex justify-between items-center px-1">
+        <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase">
+          City / Municipality
+        </label>
+        {errorStatus && (
+          <span className="text-[9px] text-red-400/60 font-medium uppercase tracking-tighter">
+            DB Error: {errorStatus.substring(0, 20)}...
+          </span>
+        )}
+      </div>
       <div className="relative">
         <input
           type="text"
