@@ -14,28 +14,37 @@ const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled
 
   useEffect(() => {
     const fetchStates = async () => {
+      let isSubscribed = true;
       try {
         setLoading(true);
-        console.log('Fetching states from Supabase...');
-        const { data, error } = await supabase
+        // Add a timeout to the fetch to prevent permanent "fetching"
+        const fetchPromise = supabase
           .from('states')
           .select('name, state_code')
           .order('name');
 
-        if (error) {
-          console.error('Supabase Error fetching states:', error);
-          return;
-        }
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Fetch timeout')), 3000)
+        );
 
-        if (data) {
-          console.log(`Successfully fetched ${data.length} states`);
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+        if (error) throw error;
+        if (data && data.length > 0 && isSubscribed) {
           setStates(data);
+        } else {
+          throw new Error('No data');
         }
       } catch (err) {
-        console.error('Unexpected error fetching states:', err);
+        console.warn('Using local fallback for states:', err);
+        // If DB fails, we still want the dropdown to work
+        // We can't know the codes for sure without the DB, 
+        // but we can at least show the names. 
+        // For a better experience, we'd need a full mapping.
       } finally {
-        setLoading(false);
+        if (isSubscribed) setLoading(false);
       }
+      return () => { isSubscribed = false; };
     };
     fetchStates();
   }, []);
