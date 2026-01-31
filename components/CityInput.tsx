@@ -33,13 +33,19 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
         if (!state || !value || value.length < 2) {
           setSuggestions([]);
           setErrorStatus(null);
+          setShowSuggestions(false);
           return;
+        }
+
+        const orFilters = [`state_code.eq."${state}"`];
+        if (stateName && stateName !== state) {
+          orFilters.push(`state_code.eq."${stateName}"`);
         }
 
         const { data, error } = await supabase
           .from('cities')
           .select('name')
-          .or(`state_code.eq."${state}",state_code.eq."${stateName}"`)
+          .or(orFilters.join(','))
           .ilike('name', `${value}%`)
           .limit(10);
 
@@ -59,9 +65,9 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
       }
     };
 
-    const timeoutId = setTimeout(fetchCities, 300); // Debounce
+    const timeoutId = setTimeout(fetchCities, 300);
     return () => clearTimeout(timeoutId);
-  }, [value, state]);
+  }, [value, state, stateName]);
 
   const handleSelect = (city: string) => {
     onChange(city);
