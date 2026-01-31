@@ -99,17 +99,23 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
         )}
 
         {/* Autocomplete Dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
+        {showSuggestions && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-xl z-50">
-            {suggestions.map((city, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSelect(city)}
-                className="w-full text-left px-5 py-3 text-sm font-bold text-slate-300 hover:bg-blue-600 hover:text-white transition-colors uppercase"
-              >
-                {city}
-              </button>
-            ))}
+            {suggestions.length > 0 ? (
+              suggestions.map((city, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelect(city)}
+                  className="w-full text-left px-5 py-3 text-sm font-bold text-slate-300 hover:bg-blue-600 hover:text-white transition-colors uppercase"
+                >
+                  {city}
+                </button>
+              ))
+            ) : (
+              <div className="px-5 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-900/80 italic">
+                No matching cities found in {stateName || state}
+              </div>
+            )}
           </div>
         )}
       </div>
