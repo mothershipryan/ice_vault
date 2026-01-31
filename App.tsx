@@ -274,7 +274,12 @@ const App: React.FC = () => {
                         <p className="text-blue-400 text-xs font-black uppercase tracking-widest mb-1">Asset Loaded</p>
                         <p className="text-slate-400 text-[11px] font-medium truncate max-w-[200px]">
                           {file.name}
-                        </p>
+              </p>
+              <img 
+                src="/icemelt_150w.png"
+                alt="IceMelt"
+                className="w-20 h-auto mx-auto mt-4"
+              />
                       </div>
                     )}
                   </div>
