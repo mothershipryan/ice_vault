@@ -34,20 +34,23 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
           return;
         }
 
+        console.log(`Searching for cities in state: ${state} (${stateName}) matching: ${value}`);
+
         // Try matching against state_code using either the code OR the full name
         const { data, error } = await supabase
           .from('cities')
           .select('name')
-          .or(`state_code.eq."${state}",state_code.eq."${stateName}"`)
+          .or(`state_code.eq.${state},state_code.eq.${stateName}`)
           .ilike('name', `${value}%`)
           .limit(50);
 
         if (error) {
-          console.error('Supabase Error fetching cities:', error);
+          console.error('Supabase Error fetching cities:', error.message, error.details);
           return;
         }
 
         if (data) {
+          console.log(`Found ${data.length} potential matches`);
           const uniqueCities = Array.from(new Set(data.map((c: any) => c.name)));
           setSuggestions(uniqueCities.slice(0, 5));
           setShowSuggestions(true);
