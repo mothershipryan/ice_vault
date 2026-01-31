@@ -114,13 +114,6 @@ const App: React.FC = () => {
         {/* Header */}
         {!isInstalling && (
           <div className="text-center mb-10 space-y-4">
-            <div className="flex justify-center mb-2">
-              <img
-                src="/icemelt_150w.png"
-                alt="IceMelt"
-                className="w-24 h-auto drop-shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-              />
-            </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
               <span className="text-blue-300 text-[10px] font-bold tracking-widest uppercase">Encryption Active</span>
@@ -129,9 +122,18 @@ const App: React.FC = () => {
               FUCK I.C.E.<br />
               <span className="text-blue-400">Vault</span>
             </h1>
-            <p className="text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
-              SECURE STATE-INDEXED COLD VIDEO STORAGE
-            </p>
+            <div className="space-y-4">
+              <p className="text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
+                SECURE STATE-INDEXED COLD VIDEO STORAGE
+              </p>
+              <div className="flex justify-center">
+                <img
+                  src="/icemelt_150w.png"
+                  alt="IceMelt"
+                  className="w-16 h-auto drop-shadow-[0_0_15px_rgba(37,99,235,0.4)] opacity-80"
+                />
+              </div>
+            </div>
           </div>
         )}
 
