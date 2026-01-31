@@ -27,23 +27,31 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state 
 
   useEffect(() => {
     const fetchCities = async () => {
-      if (!state || !value || value.length < 2) {
-        setSuggestions([]);
-        return;
-      }
+      try {
+        if (!state || !value || value.length < 2) {
+          setSuggestions([]);
+          return;
+        }
 
-      const { data, error } = await supabase
-        .from('cities')
-        .select('name')
-        .eq('state_code', state) // state prop is now the code from StateSelector
-        .ilike('name', `${value}%`)
-        .limit(50);
+        const { data, error } = await supabase
+          .from('cities')
+          .select('name')
+          .eq('state_code', state)
+          .ilike('name', `${value}%`)
+          .limit(50);
 
-      if (!error && data) {
-        // Filter unique city names (case-insensitive)
-        const uniqueCities = Array.from(new Set(data.map((c: any) => c.name)));
-        setSuggestions(uniqueCities.slice(0, 5));
-        setShowSuggestions(true);
+        if (error) {
+          console.error('Supabase Error fetching cities:', error);
+          return;
+        }
+
+        if (data) {
+          const uniqueCities = Array.from(new Set(data.map((c: any) => c.name)));
+          setSuggestions(uniqueCities.slice(0, 5));
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching cities:', err);
       }
     };
 

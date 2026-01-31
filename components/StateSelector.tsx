@@ -14,16 +14,28 @@ const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled
 
   useEffect(() => {
     const fetchStates = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('states')
-        .select('name, state_code')
-        .order('name');
+      try {
+        setLoading(true);
+        console.log('Fetching states from Supabase...');
+        const { data, error } = await supabase
+          .from('states')
+          .select('name, state_code')
+          .order('name');
 
-      if (!error && data) {
-        setStates(data);
+        if (error) {
+          console.error('Supabase Error fetching states:', error);
+          return;
+        }
+
+        if (data) {
+          console.log(`Successfully fetched ${data.length} states`);
+          setStates(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching states:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchStates();
   }, []);
