@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
+  const [passphrase, setPassphrase] = useState<string>(''); // NEW
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -71,8 +72,8 @@ const App: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !selectedState || !selectedCity || !selectedDate) {
-      setError('Please fill in all fields.');
+    if (!file || !selectedState || !selectedCity || !selectedDate || !passphrase) {
+      setError('Please fill in all fields (including passphrase).');
       return;
     }
 
@@ -81,9 +82,10 @@ const App: React.FC = () => {
       setError(null);
       const result = await storageService.uploadVideo(
         file,
-        selectedStateName || selectedState, // Use name if available
+        selectedStateName || selectedState,
         selectedCity,
         selectedDate,
+        passphrase, // ADDED
         (p) => setProgress(p)
       );
       setRecoveryKey(result.recoveryKey || null);
@@ -257,6 +259,26 @@ const App: React.FC = () => {
                   onChange={setSelectedDate}
                   disabled={status === AppStatus.UPLOADING}
                 />
+
+                <div className="bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 space-y-3">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
+                      Vault Passphrase
+                    </label>
+                    <span className="text-[9px] text-blue-400/60 font-black uppercase tracking-widest bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-500/10">Zero Knowledge</span>
+                  </div>
+                  <input
+                    type="password"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    placeholder="ENTER RETRIEVAL PASSWORD"
+                    disabled={status === AppStatus.UPLOADING}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
+                  />
+                  <p className="text-[9px] text-slate-500 font-medium px-1 leading-tight">
+                    This password is NEVER sent to our servers. It is used to lock your encryption key locally. If you lose this, your footage is unrecoverable.
+                  </p>
+                </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">

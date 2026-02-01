@@ -19,7 +19,7 @@ const RetrievalModule: React.FC = () => {
     setLoading(true);
     setHasSearched(true);
     try {
-      const data = await storageService.getRecords({ state, city, date, vaultKey });
+      const data = await storageService.getRecords({ state, city, date });
       setResults(data);
     } catch (e) {
       console.error(e);
@@ -32,15 +32,15 @@ const RetrievalModule: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="space-y-6">
         <div className="bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 space-y-2">
-          <label className="text-blue-400 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
-            Vault Access Key
+          <label className="text-blue-400 text-[10px] font-black tracking-[0.2em] uppercase px-1">
+            Vault Access Key / Passphrase
           </label>
           <input
-            type="text"
+            type="password"
             value={vaultKey}
             onChange={(e) => setVaultKey(e.target.value)}
-            placeholder="ICE-XXXX-XXXX-XXXX-XXXX"
-            className="w-full h-[48px] bg-slate-900 border border-slate-700 text-white rounded-xl px-4 text-sm font-mono tracking-wider focus:outline-none focus:border-blue-500 transition-colors uppercase placeholder:text-slate-700"
+            placeholder="ENTER YOUR PASSPHRASE"
+            className="w-full h-[48px] bg-slate-900 border border-slate-700 text-white rounded-xl px-4 text-sm font-bold tracking-wider focus:outline-none focus:border-blue-500 transition-all uppercase placeholder:text-slate-700"
           />
         </div>
 
@@ -119,8 +119,11 @@ const RetrievalModule: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch encrypted asset");
                     const encryptedBlob = await response.blob();
 
-                    // 2. Import Key
-                    const key = await storageService.importKeyFromString(vaultKey);
+                    // 2. Retrieve the DEK (using Passphrase or Legacy Key)
+                    const key = await storageService.retrieveRecordKey(
+                      (rec as any).encryptedKeyPayload,
+                      vaultKey
+                    );
 
                     // 3. Decrypt
                     const decryptedBlob = await storageService.decryptFile(encryptedBlob, key);
