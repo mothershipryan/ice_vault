@@ -78,63 +78,90 @@ const RetrievalModule: React.FC = () => {
         </button>
       </div>
 
-      {hasSearched && !loading && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              Found {results.length} Verifiable Records
-            </h4>
-          </div>
-
-          {results.length > 0 ? (
-            <div className="space-y-3">
-              {results.map((rec) => (
-                <div key={rec.id} className="bg-slate-950/50 border border-white/5 rounded-2xl p-5 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-white text-sm font-bold">{rec.fileName}</p>
-                      <p className="text-blue-400 text-[9px] font-black tracking-widest uppercase mt-1">ID: {rec.id}</p>
-                    </div>
-                    <span className="bg-green-500/10 text-green-400 text-[8px] font-black px-2 py-1 rounded-md border border-green-500/20">
-                      VERIFIED
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-[10px]">
-                    <div>
-                      <p className="text-slate-500 uppercase font-black tracking-tighter">Node Region</p>
-                      <p className="text-slate-300 font-bold">DE-CENTRAL-1</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 uppercase font-black tracking-tighter">Hash Integrity</p>
-                      <p className="text-slate-300 font-bold truncate">{rec.hash?.substring(0, 12)}...</p>
-                    </div>
-                  </div>
-
-                  <a
-                    href={rec.bucketUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-400/20 rounded-xl text-blue-400 text-[10px] font-black uppercase tracking-widest transition-all"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Request Archive Access
-                  </a>
+      {results.length > 0 ? (
+        <div className="space-y-3">
+          {results.map((rec) => (
+            <div key={rec.id} className="bg-slate-950/50 border border-white/5 rounded-2xl p-5 space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-white text-sm font-bold">{rec.fileName}</p>
+                  <p className="text-blue-400 text-[9px] font-black tracking-widest uppercase mt-1">ID: {rec.id}</p>
                 </div>
-              ))}
+                <span className="bg-green-500/10 text-green-400 text-[8px] font-black px-2 py-1 rounded-md border border-green-500/20">
+                  VERIFIED
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-[10px]">
+                <div>
+                  <p className="text-slate-500 uppercase font-black tracking-tighter">Node Region</p>
+                  <p className="text-slate-300 font-bold">CH-CITY-1 (SWISS)</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 uppercase font-black tracking-tighter">Encryption</p>
+                  <p className="text-slate-300 font-bold">AES-256-GCM</p>
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (!vaultKey) {
+                    alert("Please enter your Vault Access Key above to decrypt this file.");
+                    return;
+                  }
+
+                  try {
+                    const btn = document.getElementById(`btn-${rec.id}`);
+                    if (btn) btn.innerText = "Decrypting...";
+
+                    // 1. Fetch Encrypted Blob
+                    const response = await fetch(rec.bucketUrl);
+                    if (!response.ok) throw new Error("Failed to fetch encrypted asset");
+                    const encryptedBlob = await response.blob();
+
+                    // 2. Import Key
+                    const key = await storageService.importKeyFromString(vaultKey);
+
+                    // 3. Decrypt
+                    const decryptedBlob = await storageService.decryptFile(encryptedBlob, key);
+
+                    // 4. Download
+                    const url = URL.createObjectURL(decryptedBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = rec.fileName.replace('.enc', ''); // Restore original name
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    if (btn) btn.innerText = "Decrypted & Downloaded";
+                  } catch (err) {
+                    console.error(err);
+                    alert("Decryption Failed. Check your Key.");
+                    const btn = document.getElementById(`btn-${rec.id}`);
+                    if (btn) btn.innerText = "Decryption Failed";
+                  }
+                }}
+                id={`btn-${rec.id}`}
+                className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-400/20 rounded-xl text-blue-400 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
+                Decrypt & Download
+              </button>
             </div>
-          ) : (
-            <div className="p-8 text-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
-              <p className="text-slate-500 text-xs font-bold">No encrypted assets found for this criteria.</p>
-            </div>
-          )}
+          ))}
+        </div>
+      ) : (
+        <div className="p-8 text-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
+          <p className="text-slate-500 text-xs font-bold">No encrypted assets found for this criteria.</p>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
+
 
 export default RetrievalModule;
