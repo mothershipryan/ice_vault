@@ -7,7 +7,7 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onInstallClick }) => {
     return (
-        <footer className="w-full mt-20 pb-safe">
+        <footer className="w-full mt-6 pb-safe">
             {/* Install Action Area - Distinct from footer links */}
             <div className="flex justify-center mb-12">
                 <button
