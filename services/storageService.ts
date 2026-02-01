@@ -33,8 +33,75 @@ const deriveKEK = async (passphrase: string, salt: Uint8Array): Promise<CryptoKe
     passwordKey,
     { name: "AES-GCM", length: 256 },
     false,
-    ["wrapKey", "unwrapKey"]
+    ["wrapKey", "unwrapKey", "encrypt", "decrypt"]
   );
+};
+
+// Helper: Derive a Search Index Key (Blind Indexing) from a passphrase
+const deriveSearchKey = async (passphrase: string, salt: Uint8Array): Promise<CryptoKey> => {
+  const encoder = new TextEncoder();
+  const passwordKey = await window.crypto.subtle.importKey(
+    "raw",
+    encoder.encode(passphrase),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
+  return window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: salt as BufferSource,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    passwordKey,
+    { name: "HMAC", hash: { name: "SHA-256" } },
+    false,
+    ["sign"]
+  );
+};
+
+// Helper: Calculate Blind Index (HMAC-SHA256)
+const calculateBlindIndex = async (term: string, key: CryptoKey): Promise<string> => {
+  const encoder = new TextEncoder();
+  const signature = await window.crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(term.toLowerCase().trim())
+  );
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+// Helper: Encrypt Metadata Blob
+const encryptMetadata = async (metadata: object, key: CryptoKey): Promise<string> => {
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const encoder = new TextEncoder();
+  const encryptedBuffer = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoder.encode(JSON.stringify(metadata))
+  );
+
+  const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+  const dataHex = Array.from(new Uint8Array(encryptedBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${ivHex}:${dataHex}`;
+};
+
+// Helper: Decrypt Metadata Blob
+const decryptMetadata = async (encryptedStr: string, key: CryptoKey): Promise<any> => {
+  const [ivHex, dataHex] = encryptedStr.split(':');
+  const iv = new Uint8Array(ivHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+  const data = new Uint8Array(dataHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+
+  const decryptedBuffer = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    data
+  );
+
+  const decoder = new TextDecoder();
+  return JSON.parse(decoder.decode(decryptedBuffer));
 };
 
 // Helper: Wrap (encrypt) the video key with the KEK
@@ -121,29 +188,54 @@ export const storageService = {
 
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const kek = await deriveKEK(passphrase, salt);
+    const searchKey = await deriveSearchKey(passphrase, salt);
+
+    // 1. Wrap the Video Encryption Key
     const wrappedKeyStr = await wrapKey(secretKey, kek);
 
-    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-    const dbKeyPayload = `PWV1:${saltHex}:${wrappedKeyStr}`;
+    // 2. Encrypt Metadata (Filename, Date, etc.)
+    const metadataMsg = { filename: file.name, upload_date: date, state, city };
+    const encryptedMetadata = await encryptMetadata(metadataMsg, kek); // Encrypting metadata with KEK directly for simplicity
 
-    const bucketName = state.toLowerCase().replace(/\s+/g, '-');
-    const s3Path = `/${state}/${city}/${date}_${file.name}.enc`;
+    // 3. Generate Blind Indexes
+    const blindIndexState = await calculateBlindIndex(state, searchKey);
+    const blindIndexCity = await calculateBlindIndex(city, searchKey);
+    const blindIndexDate = await calculateBlindIndex(date, searchKey);
+
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    const dbKeyPayload = `PWV2:${saltHex}:${wrappedKeyStr}`; // PWV2 indicates Hardened Schema
+
+    const bucketName = 'video-vault-v1'; // Normalized bucket name to avoid leak in S3 path
+    const randomName = crypto.randomUUID();
+    const s3Path = `/${randomName}.enc`; // Fully anonymized path
     onProgress(75);
 
-    const { data: record, error } = await supabase
-      .from('video_vault')
-      .insert({
-        user_id: user.id,
-        state,
-        city,
-        upload_date: date,
-        filename: file.name,
-        s3_path: s3Path,
-        encrypted_aes_key: dbKeyPayload,
-        file_size: file.size
+    const { data: { session } } = await supabase.auth.getSession();
+
+    // Proxy Request: Save Metadata
+    const response = await fetch('/api/vault', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify({
+        action: 'save_metadata',
+        payload: {
+          user_id: user.id,
+          blind_index_state: blindIndexState,
+          blind_index_city: blindIndexCity,
+          blind_index_date: blindIndexDate,
+          encrypted_metadata: encryptedMetadata,
+          s3_path: s3Path,
+          encrypted_aes_key: dbKeyPayload,
+          file_size: file.size
+        }
       })
-      .select()
-      .single();
+    });
+
+    if (!response.ok) throw new Error('Proxy API Error');
+    const { data: record, error } = await response.json();
 
     if (error) throw new Error('Database save failed');
     onProgress(100);
@@ -157,9 +249,9 @@ export const storageService = {
     return {
       id: record.id,
       fileName: file.name,
-      state: record.state,
-      city: record.city,
-      uploadDate: record.upload_date,
+      state: state,
+      city: city,
+      uploadDate: date,
       fileSize: file.size,
       bucketUrl: `${s3Endpoint}/${bucketName}${s3Path}`,
       recoveryKey: `ICE-${hexKey}`,
@@ -170,6 +262,13 @@ export const storageService = {
 
   retrieveRecordKey: async (dbKeyPayload: string, passphraseOrKey: string): Promise<CryptoKey> => {
     if (dbKeyPayload.startsWith('PWV1:')) {
+      const [, saltHex, wrappedKeyStr] = dbKeyPayload.split(':');
+      const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+      const kek = await deriveKEK(passphraseOrKey, salt);
+      return unwrapKey(wrappedKeyStr, kek);
+    }
+    else if (dbKeyPayload.startsWith('PWV2:')) {
+      // PWV2 shares same KEK derivation as V1 for the wrapping key
       const [, saltHex, wrappedKeyStr] = dbKeyPayload.split(':');
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
       const kek = await deriveKEK(passphraseOrKey, salt);
@@ -209,21 +308,89 @@ export const storageService = {
     }
   },
 
-  getRecords: async (query: { state?: string, city?: string, date?: string }): Promise<UploadRecord[]> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+  getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    const token = session?.access_token;
 
-    let queryBuilder = supabase.from('video_vault').select('*').eq('user_id', user.id);
-    if (query.state) queryBuilder = queryBuilder.eq('state', query.state);
-    if (query.city) queryBuilder = queryBuilder.eq('city', query.city);
-    if (query.date) queryBuilder = queryBuilder.eq('upload_date', query.date);
+    if (!user || !token) return [];
 
-    const { data, error } = await queryBuilder;
-    if (error) return [];
+    let legacyRecords: any[] = [];
+    let hardenedRecords: any[] = [];
 
-    return data.map((row: any) => ({
+    // 1. Fetch Legacy Data (V1) - Direct
+    let legacyQuery = supabase.from('video_vault').select('*').eq('user_id', user.id);
+    if (query.state) legacyQuery = legacyQuery.eq('state', query.state);
+    if (query.city) legacyQuery = legacyQuery.eq('city', query.city);
+    if (query.date) legacyQuery = legacyQuery.eq('upload_date', query.date);
+
+    try {
+      const { data: v1Data } = await legacyQuery;
+      legacyRecords = v1Data || [];
+    } catch (e) { console.error("Legacy fetch error", e); }
+
+    // 2. Fetch Hardened Data (V2) - via Proxy
+    // We fetch ALL for the user and decrypt/filter client-side to ensure Zero-Knowledge of search terms.
+    try {
+      const resV2 = await fetch('/api/vault', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          action: 'search_vault',
+          payload: {}
+        })
+      });
+
+      if (resV2.ok) {
+        const jsonV2 = await resV2.json();
+        const v2Rows = jsonV2.data || [];
+
+        if (v2Rows.length > 0) {
+          hardenedRecords = await Promise.all(v2Rows.map(async (row: any) => {
+            let decryptedMeta: any = { filename: 'Encrypted', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
+
+            if (passphrase) {
+              try {
+                // Attempt decryption
+                const [, saltHex] = row.encrypted_aes_key.split(':');
+                const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+                const kek = await deriveKEK(passphrase, salt);
+                decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+              } catch (e) {
+                // Decryption failed (wrong passphrase)
+              }
+            }
+
+            return {
+              id: row.id,
+              fileName: decryptedMeta.filename,
+              state: decryptedMeta.state,
+              city: decryptedMeta.city,
+              uploadDate: decryptedMeta.upload_date,
+              fileSize: row.file_size || 0,
+              bucketUrl: `${s3Endpoint}${row.s3_path}`,
+              encryptedKeyPayload: row.encrypted_aes_key,
+              status: 'completed',
+              hash: 'N/A'
+            };
+          }));
+        }
+
+        // Filter Hardened Records logic
+        if (passphrase && (query.state || query.city || query.date)) {
+          hardenedRecords = hardenedRecords.filter(r => {
+            if (query.state && r.state.toLowerCase() !== query.state.toLowerCase()) return false;
+            if (query.city && r.city.toLowerCase() !== query.city.toLowerCase()) return false;
+            if (query.date && r.uploadDate !== query.date) return false;
+            return true;
+          });
+        }
+      }
+    } catch (e) { console.error("Hardened fetch error", e); }
+
+    const allRecords = [...legacyRecords.map((row: any) => ({
       id: row.id,
-      fileName: row.filename || 'Encrypted Video',
+      fileName: row.filename || 'Legacy Video',
       state: row.state,
       city: row.city,
       uploadDate: row.upload_date,
@@ -232,6 +399,8 @@ export const storageService = {
       encryptedKeyPayload: row.encrypted_aes_key,
       status: 'completed',
       hash: 'N/A'
-    }));
+    })), ...hardenedRecords];
+
+    return allRecords;
   }
 };

@@ -19,7 +19,7 @@ const RetrievalModule: React.FC = () => {
     setLoading(true);
     setHasSearched(true);
     try {
-      const data = await storageService.getRecords({ state, city, date });
+      const data = await storageService.getRecords({ state, city, date }, vaultKey);
       setResults(data);
     } catch (e) {
       console.error(e);
