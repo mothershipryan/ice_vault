@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 
 const FAQ_ITEMS = [
   {
-    q: "Why am i doing this?",
+    q: "Why am I doing this?",
     a: "Ice Vault was born from a fundamental mistrust of Immigration and Customs Enforcement (ICE). History has shown a pattern of systemic abuse and the tragic, senseless deaths of innocent, hardworking individuals at the hands of state actors. When those in power operate without oversight, they often attempt to suppress evidence through intimidation or the destruction of physical devices. This platform exists to strip them of that power by ensuring every interaction is witnessed, encrypted, and stored beyond the reach of those who would seek to bury the truth."
   },
   {
     q: "How do I retrieve my footage for a court case?",
-    a: "Switch to 'Retrieval' mode in the main terminal. You can locate your encrypted assets by searching for the State, City, and Date of the occurrence. Each retrieval provides a secure link to the Swiss Retrieval Terminal and a cryptographic hash for authenticity verification."
+    a: "Switch to 'Retrieval' mode in the main terminal. You can locate your encrypted assets by searching for the State, City, and Date. To retrieve the footage, you must provide the Vault Access Key (Recovery Key) generated during your deposit. The file is decrypted locally in your browser, ensuring that our servers never see the raw video content."
   },
   {
     q: "How is my privacy guaranteed?",
