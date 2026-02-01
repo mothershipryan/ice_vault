@@ -17,7 +17,14 @@ const App: React.FC = () => {
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedStateName, setSelectedStateName] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  // Initialize with LOCAL date (YYYY-MM-DD) instead of UTC to avoid timezone shift bugs
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [progress, setProgress] = useState<number>(0);
