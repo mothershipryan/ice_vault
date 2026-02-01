@@ -275,7 +275,7 @@ const App: React.FC = () => {
                     disabled={status === AppStatus.UPLOADING}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
                   />
-                  <p className="text-[9px] text-slate-500 font-medium px-1 leading-tight">
+                  <p className="text-xs text-slate-500 font-medium px-1 leading-relaxed">
                     This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.
                   </p>
                 </div>
