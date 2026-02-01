@@ -23,5 +23,6 @@ export enum AppStatus {
 export enum ViewMode {
   DEPOSIT = 'DEPOSIT',
   RETRIEVAL = 'RETRIEVAL',
-  INSTALLATION = 'INSTALLATION'
+  INSTALLATION = 'INSTALLATION',
+  PRIVACY = 'PRIVACY'
 }
