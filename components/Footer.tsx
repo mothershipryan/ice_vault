@@ -33,7 +33,7 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onInstallClick }) => {
                 {/* Navigation Links */}
                 <div className="flex justify-center items-center gap-8">
                     <a
-                        href="mailto:contact@icevault.app"
+                        href="mailto:meltedice@fuckice.site"
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-600 hover:text-slate-300 transition-colors"
                     >
                         Contact
