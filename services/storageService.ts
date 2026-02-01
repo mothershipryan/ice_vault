@@ -148,6 +148,12 @@ export const storageService = {
     if (error) throw new Error('Database save failed');
     onProgress(100);
 
+    const rawKey = await window.crypto.subtle.exportKey("raw", secretKey);
+    const hexKey = Array.from(new Uint8Array(rawKey))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
+
     return {
       id: record.id,
       fileName: file.name,
@@ -156,6 +162,7 @@ export const storageService = {
       uploadDate: record.upload_date,
       fileSize: file.size,
       bucketUrl: `${s3Endpoint}/${bucketName}${s3Path}`,
+      recoveryKey: `ICE-${hexKey}`,
       status: 'completed',
       hash: 'N/A'
     };
