@@ -33,13 +33,13 @@ const RetrievalModule: React.FC = () => {
       <div className="space-y-6">
         <div className="bg-slate-900/50 p-4 rounded-2xl border border-blue-500/20 space-y-2">
           <label className="text-blue-400 text-[10px] font-black tracking-[0.2em] uppercase px-1">
-            Vault Access Key / Passphrase
+            Passphrase or Backup Key
           </label>
           <input
             type="password"
             value={vaultKey}
             onChange={(e) => setVaultKey(e.target.value)}
-            placeholder="ENTER YOUR PASSPHRASE"
+            placeholder="ENTER PASSPHRASE OR EMERGENCY KEY"
             className="w-full h-[48px] bg-slate-900 border border-slate-700 text-white rounded-xl px-4 text-sm font-bold tracking-wider focus:outline-none focus:border-blue-500 transition-all uppercase placeholder:text-slate-700"
           />
         </div>
@@ -106,7 +106,7 @@ const RetrievalModule: React.FC = () => {
               <button
                 onClick={async () => {
                   if (!vaultKey) {
-                    alert("Please enter your Vault Access Key above to decrypt this file.");
+                    alert("Please enter your Passphrase or Backup Key above to decrypt this file.");
                     return;
                   }
 

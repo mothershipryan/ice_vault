@@ -182,7 +182,7 @@ const App: React.FC = () => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
-                        <span className="text-xs font-black uppercase tracking-widest">Vault Access Key</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-red-400">Emergency Backup Key</span>
                       </div>
                       <div
                         onClick={handleCopyKey}
@@ -209,11 +209,11 @@ const App: React.FC = () => {
                             : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
                             }`}
                         >
-                          {copied ? 'Copied to Clipboard' : 'Current Key: Tap to Copy'}
+                          {copied ? 'Copied to Clipboard' : 'Backup Key: Tap to Copy'}
                         </button>
                       </div>
-                      <p className="text-center text-[10px] text-red-400 font-bold uppercase tracking-wide opacity-80 pt-2">
-                        ⚠️ Save this key now.<br />It is the ONLY way to retrieve this file.
+                      <p className="text-center text-[10px] text-red-500/80 font-bold uppercase tracking-wide opacity-80 pt-2">
+                        ⚠️ Use your passphrase for retrieval.<br />This key is for emergency use ONLY.
                       </p>
                     </div>
                   )}
@@ -263,7 +263,7 @@ const App: React.FC = () => {
                 <div className="bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 space-y-3">
                   <div className="flex justify-between items-center px-1">
                     <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
-                      Vault Passphrase
+                      Personal Vault Passphrase
                     </label>
                     <span className="text-[9px] text-blue-400/60 font-black uppercase tracking-widest bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-500/10">Zero Knowledge</span>
                   </div>
@@ -271,12 +271,12 @@ const App: React.FC = () => {
                     type="password"
                     value={passphrase}
                     onChange={(e) => setPassphrase(e.target.value)}
-                    placeholder="ENTER RETRIEVAL PASSWORD"
+                    placeholder="CREATE A SECURE PASSPHRASE"
                     disabled={status === AppStatus.UPLOADING}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
                   />
                   <p className="text-[9px] text-slate-500 font-medium px-1 leading-tight">
-                    This password is NEVER sent to our servers. It is used to lock your encryption key locally. If you lose this, your footage is unrecoverable.
+                    This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.
                   </p>
                 </div>
 
