@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// HARD OVERRIDE: Forced to the new working project to bypass stale Vercel caches
-const FORCED_URL = 'https://mepaapbfnwpiysccbvds.supabase.co';
-const FORCED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lcGFhcGJmbndwaXlzY2NidmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4Njc1MjUsImV4cCI6MjA4NTQ0MzUyNX0.5iBezcUApFOvsvAQK9oqBXD8_57dK5bsJh51v3R8WP0';
+// HARD OVERRIDE: Pointing to German VPS Self-Hosted Supabase
+const FORCED_URL = 'http://supabase-kong:8000';
+const FORCED_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDY4NjcwMCwiZXhwIjo0OTI2MzYwMzAwLCJyb2xlIjoiYW5vbiJ9.kTof1tUJr_RS41rgbZcWBortzcdqfn7kc36nFKqt5tg';
 
-const supabaseUrl = FORCED_URL;
-const supabaseAnonKey = FORCED_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FORCED_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FORCED_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
