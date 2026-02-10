@@ -95,7 +95,7 @@ const RetrievalModule: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 text-[10px]">
                 <div>
                   <p className="text-slate-500 uppercase font-black tracking-tighter">Node Region</p>
-                  <p className="text-slate-300 font-bold">CH-CITY-1 (SWISS)</p>
+                  <p className="text-slate-300 font-bold">DE-CITY-1 (GERMANY)</p>
                 </div>
                 <div>
                   <p className="text-slate-500 uppercase font-black tracking-tighter">Encryption</p>

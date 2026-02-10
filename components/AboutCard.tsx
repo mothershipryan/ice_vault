@@ -31,10 +31,10 @@ const AboutCard: React.FC = () => {
               ICE Vault is a web application designed to serve as an immutable digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence.
             </p>
             <p className="text-slate-400 text-xs md:text-sm leading-relaxed font-medium">
-              We guarantee <strong>zero-knowledge privacy</strong> by leveraging <strong>Swiss infrastructure</strong>, renowned for the world’s strongest data protection laws. All data is processed by <strong>Supabase</strong> and secured via <strong>Infomaniak</strong> on high-security servers physically located in <strong>Switzerland</strong>.
+              We guarantee <strong>zero-knowledge privacy</strong> by leveraging <strong>German infrastructure</strong>, renowned for robust data protection laws. All data is processed by <strong>Supabase</strong> and secured via <strong>high-security European providers</strong> on servers physically located in <strong>Germany</strong>.
             </p>
             <p className="text-slate-400 text-xs md:text-sm leading-relaxed font-medium">
-              <strong>Retrieval Protocol:</strong> Assets can be retrieved through our <strong>Swiss Retrieval Terminal</strong>. Use the State, City, and Date of capture to locate encrypted evidence. Each file is secured with a unique <strong>SHA-256 Hash</strong> for legal verification, ensuring the footage remains untampered, mathematically verified, and admissible as court-ready evidence.
+              <strong>Retrieval Protocol:</strong> Assets can be retrieved through our <strong>European Retrieval Terminal</strong>. Use the State, City, and Date of capture to locate encrypted evidence. Each file is secured with a unique <strong>SHA-256 Hash</strong> for legal verification, ensuring the footage remains untampered, mathematically verified, and admissible as court-ready evidence.
             </p>
           </div>
 
@@ -45,7 +45,7 @@ const AboutCard: React.FC = () => {
                 <div className="w-1 h-1 rounded-full bg-blue-400" />
                 <div className="w-1 h-1 rounded-full bg-blue-400" />
               </div>
-              <span className="text-[8px] text-slate-500 font-mono tracking-widest uppercase">CH Privacy Jurisdiction // Verifiable Evidence</span>
+              <span className="text-[8px] text-slate-500 font-mono tracking-widest uppercase">DE / EU PRIVACY JURISDICTION // VERIFIABLE EVIDENCE</span>
             </div>
           </div>
         </div>

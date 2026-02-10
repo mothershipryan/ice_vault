@@ -12,19 +12,19 @@ const FAQ_ITEMS = [
   },
   {
     q: "How is my privacy guaranteed?",
-    a: "We provide zero-knowledge privacy. This means your data is encrypted locally before it ever reaches our servers. Because our infrastructure is hosted in Switzerland, your data is protected by the world's strongest data protection laws."
+    a: "We provide zero-knowledge privacy. This means your data is encrypted locally before it ever reaches our servers. Because our infrastructure is hosted in Germany, your data is protected by strict European data protection laws."
   },
   {
     q: "Is my footage secure?",
-    a: "Yes. All assets are encrypted using zero-knowledge protocols. We utilize Supabase for secure data orchestration and Infomaniak for high-security storage, ensuring that only you hold the keys to your footage."
+    a: "Yes. All assets are encrypted using zero-knowledge protocols. We utilize Supabase for secure data orchestration and high-security European infrastructure for storage, ensuring that only you hold the keys to your footage."
   },
   {
     q: "Where is the data physically stored?",
-    a: "To protect against extrajudicial data requests, all ICE Vault infrastructure is hosted in Switzerland. This ensures your data is protected by strict Swiss data protection laws and international neutrality standards."
+    a: "To protect against extrajudicial data requests, all ICE Vault infrastructure is hosted in Germany. This ensures your data is protected by strict German data protection laws and is handled outside the reach of US jurisdiction."
   },
   {
     q: "What happens if my phone is seized?",
-    a: "Because ICE Vault uploads directly to our secure Swiss Retrieval Terminal, the footage is preserved even if the physical device is destroyed or confiscated immediately after the upload completes."
+    a: "Because ICE Vault uploads directly to our secure European Retrieval Terminal, the footage is preserved even if the physical device is destroyed or confiscated immediately after the upload completes."
   },
   {
     q: "Can I delete or edit uploads?",
