@@ -182,10 +182,14 @@ export const storageService = {
     let { data: { user } } = await supabase.auth.getUser();
     let { data: { session } } = await supabase.auth.getSession();
 
-    // If no user or session, try to sign in anonymously
+    // If no user/session, sign in with the public uploader account
     if (!user || !session) {
-      console.log('No active session, signing in anonymously...');
-      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+      console.log('No active session, signing in as uploader...');
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: 'uploader@fuck-ice.com',
+        password: 'PUBLIC_UPLOADER_PASSWORD_123!'
+      });
+
       if (authError) {
         console.error('Auth failed:', authError);
         throw new Error(`Authentication failed: ${authError.message}`);
