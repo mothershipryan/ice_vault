@@ -10,6 +10,7 @@ export interface UploadRecord {
   status: 'pending' | 'uploading' | 'completed' | 'failed';
   hash?: string;
   recoveryKey?: string;
+  encryptedKeyPayload?: string;
 }
 
 export enum AppStatus {
