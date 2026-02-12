@@ -44,6 +44,14 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onInstallClick }) => {
                     >
                         Privacy
                     </button>
+                    <a
+                        href="https://rddqcxfalrlmlvirjlca.supabase.co/storage/v1/object/public/logos/media-kit.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-600 hover:text-slate-300 transition-colors"
+                    >
+                        Media Kit
+                    </a>
                 </div>
 
                 {/* System Tag */}
