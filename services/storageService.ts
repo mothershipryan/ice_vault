@@ -223,108 +223,69 @@ export const storageService = {
     const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
     const dbKeyPayload = `PWV2:${saltHex}:${wrappedKeyStr}`; // PWV2 indicates Hardened Schema
 
-    const bucketName = 'fuckicevault'; // Normalized bucket name to avoid leak in S3 path
+    const bucketName = 'fuckicevault';
     const randomName = crypto.randomUUID();
-    const s3Path = `/${randomName}.enc`; // Fully anonymized path
+    const s3Path = `${randomName}.enc`; // Path inside bucket (no leading slash for storage-js usually)
     onProgress(75);
 
-    // 1. Get Presigned URL
-    console.log('Requesting presigned URL...');
-    const presignedRes = await fetch('/api/vault', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`
-      },
-      body: JSON.stringify({
-        action: 'get_presigned_url',
-        payload: {
-          key: s3Path.substring(1), // Remove leading slash for S3 key
-          fileType: 'application/octet-stream' // Encrypted blob type
-        }
-      })
-    });
+    // 1. Upload to Supabase Storage (Proxies to S3/Disk)
+    console.log('Uploading via Supabase Storage...');
 
-    if (!presignedRes.ok) {
-      const errText = await presignedRes.text();
-      throw new Error(`Failed to get upload URL: ${presignedRes.status} ${errText}`);
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from(bucketName)
+      .upload(s3Path, encryptedBlob, {
+        contentType: 'application/octet-stream',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Storage Upload Failed:', uploadError);
+      throw new Error(`Upload Failed: ${uploadError.message}`);
     }
-    const { data: { url: uploadUrl } } = await presignedRes.json();
-    console.log('Got presigned URL');
 
-    // 2. Upload to S3 with Progress
-    await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    // Calculate progress manually isn't supported by supabase-js v2 upload() directly unless using XHR custom client
+    // So we just jump to 100% after await
+    onProgress(95);
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          // Encryption takes 0-75%, Upload takes 75-95%
-          const percentComplete = (event.loaded / event.total) * 20;
-          onProgress(75 + percentComplete);
-        }
-      };
+    // 2. Save Metadata to Database
+    const { error: dbError } = await supabase
+      .from('videos')
+      .insert({
+        user_id: user.id,
+        blind_index_state: blindIndexState,
+        blind_index_city: blindIndexCity,
+        blind_index_date: blindIndexDate,
+        encrypted_metadata: encryptedMetadata,
+        s3_path: s3Path, // Store path
+        encrypted_aes_key: dbKeyPayload,
+        file_size: file.size,
+        created_at: new Date().toISOString()
+      });
 
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(null);
-        } else {
-          reject(new Error(`S3 Upload Failed: ${xhr.status}`));
-        }
-      };
+    if (dbError) {
+      console.error('Database Insert Failed:', dbError);
+      // Optional: Cleanup file?
+      throw new Error(`Database Error: ${dbError.message}`);
+    }
 
-      xhr.onerror = () => reject(new Error('S3 Network Error'));
-      xhr.send(encryptedBlob);
-    });
-
-    // 3. Save Metadata (Proxy Request)
-    const response = await fetch('/api/vault', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`
-      },
-      body: JSON.stringify({
-        action: 'save_metadata',
-        payload: {
-          user_id: user.id,
-          blind_index_state: blindIndexState,
-          blind_index_city: blindIndexCity,
-          blind_index_date: blindIndexDate,
-          encrypted_metadata: encryptedMetadata,
-          s3_path: s3Path,
-          encrypted_aes_key: dbKeyPayload,
-          file_size: file.size
-        }
-      })
-    });
-
-    if (!response.ok) throw new Error('Proxy API Error');
-    const { data: record, error } = await response.json();
-
-    if (error) throw new Error('Database save failed');
     onProgress(100);
-
-    const rawKey = await window.crypto.subtle.exportKey("raw", secretKey);
-    const hexKey = Array.from(new Uint8Array(rawKey))
-      .map(b => b.toString(16).padStart(2, '0'))
       .join('')
-      .toUpperCase();
+    .toUpperCase();
 
-    return {
-      id: record.id,
-      fileName: file.name,
-      state: state,
-      city: city,
-      uploadDate: date,
-      fileSize: file.size,
-      bucketUrl: `${s3Endpoint}/${bucketName}${s3Path}`,
-      recoveryKey: `ICE-${hexKey}`,
-      status: 'completed',
-      hash: 'N/A'
-    };
-  },
+  return {
+    id: record.id,
+    fileName: file.name,
+    state: state,
+    city: city,
+    uploadDate: date,
+    fileSize: file.size,
+    bucketUrl: `${s3Endpoint}/${bucketName}${s3Path}`,
+    recoveryKey: `ICE-${hexKey}`,
+    status: 'completed',
+    hash: 'N/A'
+  };
+},
 
   retrieveRecordKey: async (dbKeyPayload: string, passphraseOrKey: string): Promise<CryptoKey> => {
     if (dbKeyPayload.startsWith('PWV1:')) {
@@ -343,146 +304,146 @@ export const storageService = {
     return storageService.importKeyFromString(passphraseOrKey);
   },
 
-  importKeyFromString: async (keyString: string): Promise<CryptoKey> => {
-    const cleanKey = keyString.replace(/^ICE-|[^A-F0-9]/g, '');
-    const keyBytes = new Uint8Array(cleanKey.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+    importKeyFromString: async (keyString: string): Promise<CryptoKey> => {
+      const cleanKey = keyString.replace(/^ICE-|[^A-F0-9]/g, '');
+      const keyBytes = new Uint8Array(cleanKey.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 
-    return window.crypto.subtle.importKey(
-      "raw",
-      keyBytes,
-      { name: "AES-GCM", length: 256 },
-      true,
-      ["encrypt", "decrypt"]
-    );
-  },
-
-  decryptFile: async (encryptedBlob: Blob, key: CryptoKey): Promise<Blob> => {
-    const buffer = await encryptedBlob.arrayBuffer();
-    const iv = buffer.slice(0, 12);
-    const ciphertext = buffer.slice(12);
-
-    try {
-      const decryptedBuffer = await window.crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: new Uint8Array(iv) },
-        key,
-        ciphertext
+      return window.crypto.subtle.importKey(
+        "raw",
+        keyBytes,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
       );
-      return new Blob([decryptedBuffer]);
-    } catch (e) {
-      console.error("Decryption failed:", e);
-      throw new Error("Decryption failed. Invalid Key or Passphrase.");
-    }
-  },
+    },
 
-  getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
-    const token = session?.access_token;
+      decryptFile: async (encryptedBlob: Blob, key: CryptoKey): Promise<Blob> => {
+        const buffer = await encryptedBlob.arrayBuffer();
+        const iv = buffer.slice(0, 12);
+        const ciphertext = buffer.slice(12);
 
-    if (!user || !token) return [];
-
-    let legacyRecords: any[] = [];
-    let hardenedRecords: any[] = [];
-
-    // 1. Fetch Legacy Data (V1) - Direct
-    let legacyQuery = supabase.from('video_vault').select('*').eq('user_id', user.id);
-    if (query.state) legacyQuery = legacyQuery.eq('state', query.state);
-    if (query.city) legacyQuery = legacyQuery.eq('city', query.city);
-    if (query.date) legacyQuery = legacyQuery.eq('upload_date', query.date);
-
-    try {
-      const { data: v1Data } = await legacyQuery;
-      legacyRecords = v1Data || [];
-    } catch (e) { console.error("Legacy fetch error", e); }
-
-    // 2. Fetch Hardened Data (V2) - via Proxy
-    // We fetch ALL for the user and decrypt/filter client-side to ensure Zero-Knowledge of search terms.
-    try {
-      const resV2 = await fetch('/api/vault', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          action: 'search_vault',
-          payload: {}
-        })
-      });
-
-      if (resV2.ok) {
-        const jsonV2 = await resV2.json();
-        const v2Rows = jsonV2.data || [];
-
-        if (v2Rows.length > 0) {
-          hardenedRecords = await Promise.all(v2Rows.map(async (row: any) => {
-            let decryptedMeta: any = { filename: 'Encrypted', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
-
-            if (passphrase) {
-              try {
-                // Attempt decryption
-                const [, saltHex] = row.encrypted_aes_key.split(':');
-                const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-                let chunkData: Blob;
-      
-      // Check for Secure Context (HTTPS)
-      if (window.isSecureContext && window.crypto && window.crypto.subtle) {
-          const derivedKey = await this.deriveKey(passphrase, file.name);
-          // Encrypt chunk
-          const chunkArrayBuffer = await chunk.arrayBuffer();
-          const encryptedChunk = await this.encryptChunk(
-            chunkArrayBuffer,
-            derivedKey,
-            chunkIndex
+        try {
+          const decryptedBuffer = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(iv) },
+            key,
+            ciphertext
           );
-          chunkData = new Blob([encryptedChunk]);
-      } else {
-          console.warn('⚠️ INSECURE CONTEXT: Uploading unencrypted chunk');
-          chunkData = chunk;
-      }
-  // Decryption failed (wrong passphrase)
-              } catch (e) {
-                // Decryption failed (wrong passphrase)
-              }
+          return new Blob([decryptedBuffer]);
+        } catch (e) {
+          console.error("Decryption failed:", e);
+          throw new Error("Decryption failed. Invalid Key or Passphrase.");
+        }
+      },
+
+        getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user;
+
+          if (!user) return [];
+
+          let legacyRecords: any[] = [];
+          let hardenedRecords: any[] = [];
+
+          // 1. Fetch Legacy Data (V1) - Direct
+          let legacyQuery = supabase.from('video_vault').select('*').eq('user_id', user.id);
+          if (query.state) legacyQuery = legacyQuery.eq('state', query.state);
+          if (query.city) legacyQuery = legacyQuery.eq('city', query.city);
+          if (query.date) legacyQuery = legacyQuery.eq('upload_date', query.date);
+
+          try {
+            const { data: v1Data } = await legacyQuery;
+            legacyRecords = v1Data || [];
+          } catch (e) { console.error("Legacy fetch error", e); }
+
+          // 2. Fetch Hardened Data (V2) - via Supabase (NOT Proxy, direct)
+          // Querying blind indexes if passphrase provided, else query won't match much (except by user_id)
+          // Actually, without a backend, we can only query by user_id and then filter client-side if we have the key.
+
+          let v2Query = supabase.from('videos').select('*').eq('user_id', user.id);
+
+          // Blind Index Filtering (if we have a passphrase to generate them)
+          if (passphrase) {
+            // We need to derive the search key to generate blind indexes
+            // But wait, we don't know the salt used for the search key without a row... 
+            // Actually, in the upload, we used a random salt for KEK/SearchKey.
+            // Only the KEK salt is stored in `encrypted_aes_key` (PWV2:salt:wrappedKey).
+            // The schema assumes the SAME salt for SearchKey? 
+            // In `uploadVideo`: `deriveSearchKey(passphrase, salt)`.
+            // Yes, same salt.
+            // BUT, to query, we need to generate the blind index BEFORE fetching.
+            // This implies we need the salt. But salt is per-row!
+            // So we CANNOT query by blind index efficiently without a fixed salt or backend.
+            // Current workaround: Fetch ALL user records, then filter client-side.
+          }
+
+          try {
+            const { data: v2Data } = await v2Query;
+            const v2Rows = v2Data || [];
+
+            if (v2Rows.length > 0) {
+              // Parallel decryption/filtering
+              const decryptedPromises = v2Rows.map(async (row: any) => {
+                let decryptedMeta: any = { filename: 'Encrypted', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
+                let isValid = true;
+
+                if (passphrase) {
+                  try {
+                    // Attempt decryption of METADATA
+                    const [ivHex, dataHex] = row.encrypted_metadata.split(':');
+                    // But wait, we need the KEK first.
+                    const [prefix, saltHex, wrappedKeyStr] = row.encrypted_aes_key.split(':');
+                    if (prefix !== 'PWV2') throw new Error('Unknown format');
+
+                    const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+                    const kek = await deriveKEK(passphrase, salt);
+
+                    // Decrypt Metadata
+                    decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+
+                    // Filter Check
+                    if (query.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
+                    if (query.city && decryptedMeta.city.toLowerCase() !== query.city.toLowerCase()) isValid = false;
+                    if (query.date && decryptedMeta.upload_date !== query.date) isValid = false;
+
+                  } catch (e) {
+                    // Decryption failed means wrong passphrase or corrupted
+                    // We keep it as "Locked"
+                  }
+                }
+
+                if (!isValid) return null;
+
+                return {
+                  id: row.id,
+                  fileName: decryptedMeta.filename,
+                  state: decryptedMeta.state,
+                  city: decryptedMeta.city,
+                  uploadDate: decryptedMeta.upload_date,
+                  fileSize: row.file_size || 0,
+                  bucketUrl: `${s3Endpoint}/${row.s3_path}`, // Construct URL from endpoint + path
+                  encryptedKeyPayload: row.encrypted_aes_key,
+                  status: 'completed',
+                  hash: 'N/A'
+                };
+              });
+
+              const resolved = await Promise.all(decryptedPromises);
+              hardenedRecords = resolved.filter(r => r !== null);
             }
+          } catch (e) { console.error("Hardened fetch error", e); }
 
-            return {
-              id: row.id,
-              fileName: decryptedMeta.filename,
-              state: decryptedMeta.state,
-              city: decryptedMeta.city,
-              uploadDate: decryptedMeta.upload_date,
-              fileSize: row.file_size || 0,
-              bucketUrl: `${s3Endpoint}${row.s3_path}`,
-              encryptedKeyPayload: row.encrypted_aes_key,
-              status: 'completed',
-              hash: 'N/A'
-            };
-          }));
+          // Combine
+          return [...legacyRecords.map((row: any) => ({
+            id: row.id,
+            fileName: row.filename || 'Legacy Video',
+            state: row.state,
+            city: row.city,
+            uploadDate: row.upload_date,
+            fileSize: row.file_size || 0,
+            bucketUrl: `${s3Endpoint}${row.s3_path}`,
+            encryptedKeyPayload: row.encrypted_aes_key,
+            status: 'completed',
+            hash: 'N/A'
+          })), ...hardenedRecords];
         }
-
-        // Filter Hardened Records logic
-        if (passphrase && (query.state || query.city || query.date)) {
-          hardenedRecords = hardenedRecords.filter(r => {
-            if (query.state && r.state.toLowerCase() !== query.state.toLowerCase()) return false;
-            if (query.city && r.city.toLowerCase() !== query.city.toLowerCase()) return false;
-            if (query.date && r.uploadDate !== query.date) return false;
-            return true;
-          });
-        }
-      }
-    } catch (e) { console.error("Hardened fetch error", e); }
-
-    const allRecords = [...legacyRecords.map((row: any) => ({
-      id: row.id,
-      fileName: row.filename || 'Legacy Video',
-      state: row.state,
-      city: row.city,
-      uploadDate: row.upload_date,
-      fileSize: row.file_size || 0,
-      bucketUrl: `${s3Endpoint}${row.s3_path}`,
-      encryptedKeyPayload: row.encrypted_aes_key,
-      status: 'completed',
-      hash: 'N/A'
-    })), ...hardenedRecords];
-
-    return allRecords;
-  }
 };
