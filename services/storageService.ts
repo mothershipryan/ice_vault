@@ -205,14 +205,44 @@ export const storageService = {
     const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
     const dbKeyPayload = `PWV2:${saltHex}:${wrappedKeyStr}`; // PWV2 indicates Hardened Schema
 
-    const bucketName = 'video-vault-v1'; // Normalized bucket name to avoid leak in S3 path
+    const bucketName = 'fuckicevault'; // Normalized bucket name to avoid leak in S3 path
     const randomName = crypto.randomUUID();
     const s3Path = `/${randomName}.enc`; // Fully anonymized path
     onProgress(75);
 
     const { data: { session } } = await supabase.auth.getSession();
 
-    // Proxy Request: Save Metadata
+    // 1. Get Presigned URL
+    const presignedRes = await fetch('/api/vault', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify({
+        action: 'get_presigned_url',
+        payload: {
+          key: s3Path.substring(1), // Remove leading slash for S3 key
+          fileType: 'application/octet-stream' // Encrypted blob type
+        }
+      })
+    });
+
+    if (!presignedRes.ok) throw new Error('Failed to get upload URL');
+    const { data: { url: uploadUrl } } = await presignedRes.json();
+
+    // 2. Upload to S3
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: encryptedBlob,
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      }
+    });
+
+    if (!uploadRes.ok) throw new Error('S3 Upload Failed');
+
+    // 3. Save Metadata (Proxy Request)
     const response = await fetch('/api/vault', {
       method: 'POST',
       headers: {

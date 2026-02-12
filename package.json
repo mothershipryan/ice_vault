@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.988.0",
+    "@aws-sdk/s3-request-presigner": "^3.988.0",
     "@filen/sdk": "^0.3.12",
     "@supabase/supabase-js": "^2.93.1",
     "react": "^19.2.3",

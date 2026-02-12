@@ -81,6 +81,33 @@ export default async function handler(req: Request) {
                 result = legacyData;
                 break;
 
+            case 'get_presigned_url':
+                // Payload: { filename, fileType }
+                // @ts-ignore
+                const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
+                // @ts-ignore
+                const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+
+                const s3Client = new S3Client({
+                    region: process.env.VITE_S3_REGION,
+                    endpoint: process.env.VITE_S3_ENDPOINT,
+                    credentials: {
+                        accessKeyId: process.env.HETZNER_S3_ACCESS_KEY_ID!,
+                        secretAccessKey: process.env.HETZNER_S3_SECRET_ACCESS_KEY!,
+                    },
+                    forcePathStyle: true, // Required for some S3-compatible providers
+                });
+
+                const command = new PutObjectCommand({
+                    Bucket: 'fuckicevault', // Bucket name
+                    Key: payload.key,
+                    ContentType: payload.fileType,
+                });
+
+                const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+                result = { url };
+                break;
+
             default:
                 return new Response(JSON.stringify({ error: 'Invalid Action' }), { status: 400 });
         }
