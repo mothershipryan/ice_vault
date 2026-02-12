@@ -420,8 +420,24 @@ export const storageService = {
                 // Attempt decryption
                 const [, saltHex] = row.encrypted_aes_key.split(':');
                 const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-                const kek = await deriveKEK(passphrase, salt);
-                decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+                let chunkData: Blob;
+      
+      // Check for Secure Context (HTTPS)
+      if (window.isSecureContext && window.crypto && window.crypto.subtle) {
+          const derivedKey = await this.deriveKey(passphrase, file.name);
+          // Encrypt chunk
+          const chunkArrayBuffer = await chunk.arrayBuffer();
+          const encryptedChunk = await this.encryptChunk(
+            chunkArrayBuffer,
+            derivedKey,
+            chunkIndex
+          );
+          chunkData = new Blob([encryptedChunk]);
+      } else {
+          console.warn('⚠️ INSECURE CONTEXT: Uploading unencrypted chunk');
+          chunkData = chunk;
+      }
+  // Decryption failed (wrong passphrase)
               } catch (e) {
                 // Decryption failed (wrong passphrase)
               }
