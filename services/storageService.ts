@@ -213,6 +213,8 @@ export const storageService = {
     const { data: { session } } = await supabase.auth.getSession();
 
     // 1. Get Presigned URL
+    // 1. Get Presigned URL
+    console.log('Requesting presigned URL...');
     const presignedRes = await fetch('/api/vault', {
       method: 'POST',
       headers: {
@@ -228,19 +230,38 @@ export const storageService = {
       })
     });
 
-    if (!presignedRes.ok) throw new Error('Failed to get upload URL');
+    if (!presignedRes.ok) {
+      const errText = await presignedRes.text();
+      throw new Error(`Failed to get upload URL: ${presignedRes.status} ${errText}`);
+    }
     const { data: { url: uploadUrl } } = await presignedRes.json();
+    console.log('Got presigned URL');
 
-    // 2. Upload to S3
-    const uploadRes = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: encryptedBlob,
-      headers: {
-        'Content-Type': 'application/octet-stream'
-      }
+    // 2. Upload to S3 with Progress
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          // Encryption takes 0-75%, Upload takes 75-95%
+          const percentComplete = (event.loaded / event.total) * 20;
+          onProgress(75 + percentComplete);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(null);
+        } else {
+          reject(new Error(`S3 Upload Failed: ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('S3 Network Error'));
+      xhr.send(encryptedBlob);
     });
-
-    if (!uploadRes.ok) throw new Error('S3 Upload Failed');
 
     // 3. Save Metadata (Proxy Request)
     const response = await fetch('/api/vault', {

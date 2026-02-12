@@ -93,10 +93,10 @@ const App: React.FC = () => {
       setRecoveryKey(result.recoveryKey || null);
       setStatus(AppStatus.SUCCESS);
       setFile(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setStatus(AppStatus.ERROR);
-      setError('Upload failed. Please try again.');
+      setError(err.message || 'Upload failed. Please try again.');
     }
   };
 
