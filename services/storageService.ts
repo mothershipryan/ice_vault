@@ -179,7 +179,19 @@ export const storageService = {
     passphrase: string,
     onProgress: (progress: number) => void
   ): Promise<UploadRecord> => {
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
+
+    // If no user, try to sign in anonymously
+    if (!user) {
+      console.log('No user found, signing in anonymously...');
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+      if (authError) {
+        console.error('Auth failed:', authError);
+        throw new Error('Authentication failed');
+      }
+      user = authData.user;
+    }
+
     if (!user) throw new Error('User not authenticated');
 
     onProgress(1);
