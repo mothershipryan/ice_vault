@@ -180,19 +180,21 @@ export const storageService = {
     onProgress: (progress: number) => void
   ): Promise<UploadRecord> => {
     let { data: { user } } = await supabase.auth.getUser();
+    let { data: { session } } = await supabase.auth.getSession();
 
-    // If no user, try to sign in anonymously
-    if (!user) {
-      console.log('No user found, signing in anonymously...');
+    // If no user or session, try to sign in anonymously
+    if (!user || !session) {
+      console.log('No active session, signing in anonymously...');
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       if (authError) {
         console.error('Auth failed:', authError);
-        throw new Error('Authentication failed');
+        throw new Error(`Authentication failed: ${authError.message}`);
       }
       user = authData.user;
+      session = authData.session;
     }
 
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !session) throw new Error('User not authenticated (No session)');
 
     onProgress(1);
     const secretKey = await generateAESKey();
@@ -222,9 +224,6 @@ export const storageService = {
     const s3Path = `/${randomName}.enc`; // Fully anonymized path
     onProgress(75);
 
-    const { data: { session } } = await supabase.auth.getSession();
-
-    // 1. Get Presigned URL
     // 1. Get Presigned URL
     console.log('Requesting presigned URL...');
     const presignedRes = await fetch('/api/vault', {
