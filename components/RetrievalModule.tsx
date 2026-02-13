@@ -8,6 +8,7 @@ import { UploadRecord } from '../types.ts';
 
 const RetrievalModule: React.FC = () => {
   const [state, setState] = useState('');
+  const [stateName, setStateName] = useState('');
   const [city, setCity] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [results, setResults] = useState<UploadRecord[]>([]);
@@ -19,7 +20,7 @@ const RetrievalModule: React.FC = () => {
     setLoading(true);
     setHasSearched(true);
     try {
-      const data = await storageService.getRecords({ state, city, date }, vaultKey);
+      const data = await storageService.getRecords({ state: stateName || state, city, date }, vaultKey);
       setResults(data);
     } catch (e) {
       console.error(e);
@@ -53,7 +54,13 @@ const RetrievalModule: React.FC = () => {
           </div>
         </div>
 
-        <StateSelector value={state} onChange={setState} />
+        <StateSelector
+          value={state}
+          onChange={(code, name) => {
+            setState(code);
+            setStateName(name);
+          }}
+        />
         <CityInput value={city} onChange={setCity} state={state} />
         <DatePicker value={date} onChange={setDate} />
 

@@ -298,6 +298,14 @@ export const storageService = {
   },
 
   retrieveRecordKey: async (dbKeyPayload: string, passphraseOrKey: string): Promise<CryptoKey> => {
+    // Check if passphraseOrKey is actually a raw Recovery Key (64-char hex)
+    const isHexKey = /^[0-9a-f]{64}$/i.test(passphraseOrKey.trim());
+
+    if (isHexKey) {
+      console.log('Using direct Recovery Key for retrieval');
+      return storageService.importKeyFromString(passphraseOrKey);
+    }
+
     if (dbKeyPayload.startsWith('PWV1:')) {
       const [, saltHex, wrappedKeyStr] = dbKeyPayload.split(':');
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
@@ -328,17 +336,43 @@ export const storageService = {
   },
 
   decryptFile: async (encryptedBlob: Blob, key: CryptoKey): Promise<Blob> => {
-    const buffer = await encryptedBlob.arrayBuffer();
-    const iv = buffer.slice(0, 12);
-    const ciphertext = buffer.slice(12);
+    const CHUNK_SIZE = 5 * 1024 * 1024; // Original data size
+    const ENCRYPTED_CHUNK_EXTRA = 12 + 16; // 12 IV + 16 TAG
+    const ENCRYPTED_PART_SIZE = CHUNK_SIZE + ENCRYPTED_CHUNK_EXTRA;
+
+    const decryptedParts: Blob[] = [];
+    const totalSize = encryptedBlob.size;
+    let offset = 0;
 
     try {
-      const decryptedBuffer = await window.crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: new Uint8Array(iv) },
-        key,
-        ciphertext
-      );
-      return new Blob([decryptedBuffer]);
+      while (offset < totalSize) {
+        // Find how much to read. 
+        // We don't know the exact ciphertext size of the last chunk easily, 
+        // but we know it's [IV(12)][Cipher(len)][Tag(16)].
+        // Since we encrypted in 5MB blocks, every block except the last is ENCRYPTED_PART_SIZE.
+
+        let currentPartSize = ENCRYPTED_PART_SIZE;
+        if (offset + currentPartSize > totalSize) {
+          currentPartSize = totalSize - offset;
+        }
+
+        const chunk = encryptedBlob.slice(offset, offset + currentPartSize);
+        const chunkBuffer = await chunk.arrayBuffer();
+
+        const iv = chunkBuffer.slice(0, 12);
+        const ciphertext = chunkBuffer.slice(12);
+
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: new Uint8Array(iv) },
+          key,
+          ciphertext
+        );
+
+        decryptedParts.push(new Blob([decryptedBuffer]));
+        offset += currentPartSize;
+      }
+
+      return new Blob(decryptedParts);
     } catch (e) {
       console.error("Decryption failed:", e);
       throw new Error("Decryption failed. Invalid Key or Passphrase.");
