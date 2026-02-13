@@ -366,6 +366,10 @@ export const storageService = {
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
+    // Ghost Vault Mode: Immediately return empty if no passphrase is provided.
+    // This ensures no "Locked" placeholders are leaked to unauthorized users.
+    if (!passphrase) return [];
+
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) return [];
@@ -379,30 +383,34 @@ export const storageService = {
       if (v2Rows.length === 0) return [];
 
       const decryptedPromises = v2Rows.map(async (row: any) => {
-        let decryptedMeta = { filename: 'Encrypted', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
+        let decryptedMeta;
         let isValid = true;
 
-        if (passphrase) {
-          try {
-            const parts = row.encrypted_aes_key.split(':');
-            const prefix = parts[0];
-            const saltHex = parts[1];
+        try {
+          const parts = row.encrypted_aes_key.split(':');
+          const prefix = parts[0];
+          const saltHex = parts[1];
 
-            if (prefix === 'PWV2') {
-              const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-              const kek = await deriveKEK(passphrase, salt);
-              decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+          if (prefix === 'PWV2') {
+            const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+            const kek = await deriveKEK(passphrase, salt);
+            decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
 
-              if (query.state && decryptedMeta.state !== 'Locked' && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
-              if (query.city && decryptedMeta.city !== 'Locked' && decryptedMeta.city.toLowerCase() !== query.city.toLowerCase()) isValid = false;
-              if (query.date && decryptedMeta.upload_date !== 'Locked' && decryptedMeta.upload_date !== query.date) isValid = false;
-            }
-          } catch (e) {
-            console.warn("Metadata skip:", e);
+            // Ghost Mode Filter Check (Case Insensitive)
+            if (query.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
+            if (query.city && decryptedMeta.city.toLowerCase() !== query.city.toLowerCase()) isValid = false;
+            if (query.date && decryptedMeta.upload_date !== query.date) isValid = false;
+          } else {
+            return null; // Ignore unknown or legacy formats in Ghost Mode
           }
+        } catch (e) {
+          // Ghost Mode: If decryption fails, it's not the user's file or the wrong passphrase.
+          // Silently exclude it from the results.
+          return null;
         }
 
-        if (!isValid) return null;
+        if (!isValid || !decryptedMeta) return null;
+
         const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(row.s3_path);
 
         return {

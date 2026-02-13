@@ -17,6 +17,10 @@ const RetrievalModule: React.FC = () => {
   const [vaultKey, setVaultKey] = useState('');
 
   const handleSearch = async () => {
+    if (!vaultKey) {
+      alert("Ghost Vault: You must enter a Passphrase or Backup Key to find your files.");
+      return;
+    }
     setLoading(true);
     setHasSearched(true);
     try {
@@ -45,12 +49,12 @@ const RetrievalModule: React.FC = () => {
           />
         </div>
 
-        <div className="relative">
+        <div className="relative pointer-events-none opacity-50">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-slate-900 px-2 text-slate-500 font-bold tracking-widest">OR SEARCH PUBLIC RECORDS</span>
+            <span className="bg-slate-900 px-2 text-slate-500 font-bold tracking-widest italic">Target node parameters</span>
           </div>
         </div>
 
@@ -163,8 +167,9 @@ const RetrievalModule: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="p-8 text-center bg-slate-950/30 rounded-2xl border border-dashed border-slate-800">
-          <p className="text-slate-500 text-xs font-bold">No encrypted assets found for this criteria.</p>
+        <div className="p-12 text-center bg-slate-950/30 rounded-3xl border border-dashed border-slate-800 space-y-2">
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">No matching assets materialized.</p>
+          <p className="text-slate-700 text-[10px] font-medium tracking-tight">Ensure your passphrase is correct and city/state match exactly.</p>
         </div>
       )}
     </div>
