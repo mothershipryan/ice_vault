@@ -188,7 +188,7 @@ const App: React.FC = () => {
                       </div>
                       <div
                         onClick={handleCopyKey}
-                        className="group relative bg-slate-900 rounded-lg p-3 border border-slate-700 font-mono text-center text-white font-bold tracking-wider cursor-pointer hover:border-blue-500/50 hover:bg-slate-800 transition-all active:scale-[0.98]"
+                        className="group relative bg-slate-900 rounded-lg p-3 border border-slate-700 font-mono text-center text-white font-bold tracking-wider cursor-pointer hover:border-blue-500/50 hover:bg-slate-800 transition-all active:scale-[0.98] break-all text-[11px] leading-relaxed select-all"
                       >
                         {recoveryKey}
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
