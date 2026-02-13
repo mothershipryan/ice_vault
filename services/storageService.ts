@@ -337,7 +337,7 @@ export const storageService = {
     const ENCRYPTED_CHUNK_EXTRA = 12 + 16;
     const ENCRYPTED_PART_SIZE = CHUNK_SIZE + ENCRYPTED_CHUNK_EXTRA;
 
-    // Safety check: if mimeType is missing or generic, force video/mp4 as vault assets are rarely text
+    // Safety check: if mimeType is missing or generic, force video/mp4
     let finalMime = mimeType || 'video/mp4';
     if (finalMime === 'application/octet-stream' || finalMime === 'text/plain') finalMime = 'video/mp4';
 
@@ -400,6 +400,7 @@ export const storageService = {
     let queryId: any = id;
 
     // 1. Delete from Database
+    // We use SELECT to verify deletion because some self-hosted setups don't return count on DELETE via REST unless specified
     const { error: dbError, data: deletedRows } = await supabase
       .from(tableName)
       .delete()
@@ -413,8 +414,10 @@ export const storageService = {
 
     if (!deletedRows || deletedRows.length === 0) {
       console.warn(`[Vault] No rows were deleted for ID ${id}. Record might be gone or RLS blocked deletion.`);
-      // Throwing error here to notify the user in UI
-      throw new Error(`Auto-Destruct FAILED: Record was not found in the database for deletion. This might be a permission issue.`);
+      // IMPROVED FEEDBACK: Explicitly mention RLS
+      throw new Error(`Auto-Destruct FAILED: Record was not found in the database for deletion. 
+      This is almost certainly a permissions (RLS) issue on your server. 
+      Please ensure you have run the 'Enable delete for all users' SQL script.`);
     }
 
     console.log(`[Vault] Database row purged successfully.`);
@@ -458,7 +461,10 @@ export const storageService = {
       ...(v1Resp.data || []).map(r => ({ ...r, is_legacy: true }))
     ];
 
-    if (allRows.length === 0) return [];
+    if (allRows.length === 0) {
+      console.log(`[Vault] No records found for user ${user.id}`);
+      return [];
+    }
     console.log(`[Vault] Found ${allRows.length} potential records. Scanning with key...`);
 
     const decryptedPromises = allRows.map(async (row: any) => {
@@ -482,18 +488,33 @@ export const storageService = {
             };
             metdataDecrypted = true;
           } else {
-            const meta = await decryptMetadata(row.encrypted_metadata, kek);
-            decryptedMeta = {
-              ...meta,
-              mime_type: meta.mime_type || guessMimeType(meta.filename || '')
-            };
-            metdataDecrypted = true;
+            // PROBE: Log if decryption fails for a row
+            try {
+              const meta = await decryptMetadata(row.encrypted_metadata, kek);
+              decryptedMeta = {
+                ...meta,
+                mime_type: meta.mime_type || guessMimeType(meta.filename || '')
+              };
+              metdataDecrypted = true;
+            } catch (decErr) {
+              console.warn(`[Vault] Metadata decryption failed for row ${row.id}. Likely wrong key.`);
+              return null;
+            }
           }
 
           // Relaxed Matching: Filter only IF filter is provided AND meta is available
-          if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase().trim()) return null;
-          if (query.city && decryptedMeta.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) return null;
-          if (query.date && decryptedMeta.upload_date && decryptedMeta.upload_date !== query.date) return null;
+          if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase().trim()) {
+            console.log(`[Vault] Row ${row.id} skipped: State mismatch ('${decryptedMeta.state}' vs '${query.state}')`);
+            return null;
+          }
+          if (query.city && decryptedMeta.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) {
+            console.log(`[Vault] Row ${row.id} skipped: City mismatch ('${decryptedMeta.city}' vs '${query.city}')`);
+            return null;
+          }
+          if (query.date && decryptedMeta.upload_date && decryptedMeta.upload_date !== query.date) {
+            console.log(`[Vault] Row ${row.id} skipped: Date mismatch ('${decryptedMeta.upload_date}' vs '${query.date}')`);
+            return null;
+          }
 
         } else {
           // Hex Key: Dec Short metadata if exists
@@ -517,7 +538,7 @@ export const storageService = {
       const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : bucketName).getPublicUrl(row.s3_path);
 
       return {
-        id: row.id, // Keep original ID (string/int/uuid)
+        id: row.id,
         fileName: decryptedMeta.filename,
         mimeType: decryptedMeta.mime_type || 'video/mp4',
         state: decryptedMeta.state || 'Unknown',
