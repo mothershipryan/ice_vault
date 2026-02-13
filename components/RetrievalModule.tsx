@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import StateSelector from './StateSelector.tsx';
 import CityInput from './CityInput.tsx';
 import DatePicker from './DatePicker.tsx';
@@ -103,10 +102,10 @@ const RetrievalModule: React.FC = () => {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-[10px]">
+              <div className="grid grid-cols-2 gap-4 py-2 border-y border-white/5">
                 <div>
-                  <p className="text-slate-500 uppercase font-black tracking-tighter">Node Region</p>
-                  <p className="text-slate-300 font-bold">DE-CITY-1 (GERMANY)</p>
+                  <p className="text-slate-500 uppercase font-black tracking-tighter">Status</p>
+                  <p className="text-slate-300 font-bold">Immutable</p>
                 </div>
                 <div>
                   <p className="text-slate-500 uppercase font-black tracking-tighter">Encryption</p>
@@ -120,6 +119,11 @@ const RetrievalModule: React.FC = () => {
                     alert("Please enter your Passphrase or Backup Key above to decrypt this file.");
                     return;
                   }
+
+                  const confirmed = window.confirm(
+                    "BURN AFTER READING: This file will be permanently deleted from the vault immediately after download. Continue?"
+                  );
+                  if (!confirmed) return;
 
                   try {
                     const btn = document.getElementById(`btn-${rec.id}`);
@@ -193,8 +197,7 @@ const RetrievalModule: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
-
+  );
+};
 
 export default RetrievalModule;
