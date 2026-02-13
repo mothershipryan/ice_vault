@@ -115,11 +115,6 @@ const RetrievalModule: React.FC = () => {
 
               <button
                 onClick={async () => {
-                  if (!vaultKey) {
-                    alert("Please enter your Passphrase or Backup Key above to decrypt this file.");
-                    return;
-                  }
-
                   const confirmed = window.confirm(
                     "BURN AFTER READING: This file will be permanently deleted from the vault immediately after download. Continue?"
                   );
@@ -127,7 +122,7 @@ const RetrievalModule: React.FC = () => {
 
                   try {
                     const btn = document.getElementById(`btn-${rec.id}`);
-                    if (btn) btn.innerText = "Decrypting...";
+                    if (btn) btn.innerText = "Processing...";
 
                     // 1. Fetch Encrypted Blob securely via Supabase Storage
                     const encryptedBlob = await storageService.downloadFile(rec.s3Path || "");
@@ -161,22 +156,23 @@ const RetrievalModule: React.FC = () => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
-                    if (btn) btn.innerText = "Burned & Purged";
+                    if (btn) btn.innerText = "Burning Asset...";
 
                     // 5. Auto-Destruct (Permanent Deletion)
                     try {
                       await storageService.deleteRecord(rec.id, rec.s3Path || "", !!rec.isLegacy);
                       // Remove from UI immediately
                       setResults(prev => prev.filter(r => r.id !== rec.id));
-                    } catch (delError) {
+                    } catch (delError: any) {
                       console.error("[Vault] Deletion failed:", delError);
-                      // Non-blocking in UI, but logged
+                      alert(`Download Successful, but Auto-Destruct failed: ${delError.message}. The record may still exist.`);
+                      if (btn) btn.innerText = "Purge Failed";
                     }
                   } catch (err: any) {
                     console.error("Critical Retrieval Error:", err);
                     alert(err.message || "Decryption Failed. Check your Key.");
                     const btn = document.getElementById(`btn-${rec.id}`);
-                    if (btn) btn.innerText = "Decryption Failed";
+                    if (btn) btn.innerText = "Download Failed";
                   }
                 }}
                 id={`btn-${rec.id}`}

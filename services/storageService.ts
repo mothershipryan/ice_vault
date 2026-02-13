@@ -184,6 +184,7 @@ const guessMimeType = (filename: string): string => {
     case 'avi': return 'video/x-msvideo';
     case 'mkv': return 'video/x-matroska';
     case 'webm': return 'video/webm';
+    case 'txt': return 'text/plain';
     default: return 'application/octet-stream';
   }
 };
@@ -221,8 +222,11 @@ export const storageService = {
     const searchKey = await deriveSearchKey(passphrase, salt);
 
     const wrappedKeyStr = await wrapKey(secretKey, kek);
+    // Force video MIME type if it's a known extension but browser misidentified it
+    const mimeType = file.type || guessMimeType(file.name);
+
     // Include mime_type in metadata
-    const metadataMsg = { filename: file.name, mime_type: file.type, upload_date: date, state, city };
+    const metadataMsg = { filename: file.name, mime_type: mimeType, upload_date: date, state, city };
     const encryptedMetadata = await encryptMetadata(metadataMsg, kek);
 
     const blindIndexState = await calculateBlindIndex(state, searchKey);
@@ -278,7 +282,7 @@ export const storageService = {
     return {
       id: "SUCCESS",
       fileName: file.name,
-      mimeType: file.type,
+      mimeType: mimeType,
       state: state,
       city: city,
       uploadDate: date,
@@ -333,7 +337,11 @@ export const storageService = {
     const ENCRYPTED_CHUNK_EXTRA = 12 + 16;
     const ENCRYPTED_PART_SIZE = CHUNK_SIZE + ENCRYPTED_CHUNK_EXTRA;
 
-    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes (MIME: ${mimeType || 'default'})...`);
+    // Safety check: if mimeType is missing or generic, try to force video if it's likely a video
+    let finalMime = mimeType || 'video/mp4';
+    if (finalMime === 'application/octet-stream') finalMime = 'video/mp4';
+
+    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes (MIME: ${finalMime})...`);
     const decryptedParts: Blob[] = [];
     let offset = 0;
 
@@ -357,7 +365,7 @@ export const storageService = {
         decryptedParts.push(new Blob([decryptedBuffer]));
         offset += currentPartSize;
       }
-      return new Blob(decryptedParts, { type: mimeType || 'application/octet-stream' });
+      return new Blob(decryptedParts, { type: finalMime });
     } catch (e: any) {
       console.error("[Vault] Decryption Detail:", e);
       throw new Error(`Decryption failed: ${e.message || 'Check Key'}`);
@@ -386,21 +394,27 @@ export const storageService = {
     const bucketName = isLegacy ? 'video_vault' : 'fuckicevault';
     const tableName = isLegacy ? 'video_vault' : 'videos';
 
-    console.log(`[Vault] Auto-Destruct sequence initiated for ${id}...`);
+    console.log(`[Vault] Auto-Destruct sequence initiated for ID: ${id} (Legacy: ${isLegacy}). Path: ${s3Path}`);
 
-    // 1. Delete from Storage
+    // LOGIC FIX: Always delete from Database first to ensure record is gone even if storage fails
+    // or vice versa. Usually DB first is better for privacy.
+
+    // 1. Delete from Database
+    const { error: dbError, count } = await supabase.from(tableName).delete().eq('id', id);
+    if (dbError) {
+      console.error(`[Vault] Database deletion FAILED:`, dbError);
+      throw new Error(`Auto-Destruct FAILED (DB): ${dbError.message}`);
+    }
+    console.log(`[Vault] Database row purged. Row Count Affected: ${count}`);
+
+    // 2. Delete from Storage
     const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
     if (storageError) {
-      console.warn(`[Vault] Storage deletion error (non-fatal): ${storageError.message}`);
+      console.warn(`[Vault] Storage deletion error (possibly non-fatal): ${storageError.message}`);
+      // We don't throw here to avoid blocking UI if DB record is already gone.
     }
 
-    // 2. Delete from Database
-    const { error: dbError } = await supabase.from(tableName).delete().eq('id', id);
-    if (dbError) {
-      throw new Error(`Failed to delete database record: ${dbError.message}`);
-    }
-
-    console.log(`[Vault] Record ${id} purged successfully.`);
+    console.log(`[Vault] Post-retrieval purge complete for ${id}.`);
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
@@ -435,8 +449,7 @@ export const storageService = {
     if (allRows.length === 0) return [];
 
     const decryptedPromises = allRows.map(async (row: any) => {
-      let decryptedMeta = { filename: 'Encrypted', mime_type: '', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
-      let isValid = true;
+      let decryptedMeta = { filename: 'Encrypted', mime_type: '', state: '', city: '', upload_date: '' };
       let metdataDecrypted = false;
 
       try {
@@ -450,9 +463,9 @@ export const storageService = {
             decryptedMeta = {
               filename: row.filename || 'Legacy',
               mime_type: guessMimeType(row.filename || ''),
-              state: row.state || 'Locked',
-              city: row.city || 'Locked',
-              upload_date: row.upload_date || 'Locked'
+              state: row.state || '',
+              city: row.city || '',
+              upload_date: row.upload_date || ''
             };
             metdataDecrypted = true;
           } else {
@@ -464,18 +477,22 @@ export const storageService = {
             metdataDecrypted = true;
           }
 
-          if (query.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
-          if (query.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) isValid = false;
-          if (query.date && decryptedMeta.upload_date !== query.date) isValid = false;
+          // IMPROVED LOGIC: Relaxed Matching
+          // We show the record if it matches PROVIDED filters, OR if filter is empty.
+          // This prevents records from being hidden due to missing metadata in old rows.
+          if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) return null;
+          if (query.city && decryptedMeta.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) return null;
+          if (query.date && decryptedMeta.upload_date && decryptedMeta.upload_date !== query.date) return null;
+
         } else {
-          // Hex Key: Decrypt metadata columns if they exist (legacy), else show locked.
+          // Hex Key: Dec Short metadata if exists
           if (row.is_legacy) {
             decryptedMeta = {
               filename: row.filename || 'Encrypted',
               mime_type: guessMimeType(row.filename || ''),
-              state: row.state || 'Locked',
-              city: row.city || 'Locked',
-              upload_date: row.upload_date || 'Locked'
+              state: row.state || '',
+              city: row.city || '',
+              upload_date: row.upload_date || ''
             };
             metdataDecrypted = true;
           }
@@ -485,17 +502,16 @@ export const storageService = {
       }
 
       if (!isHexKey && !metdataDecrypted) return null;
-      if (!isValid) return null;
 
       const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : bucketName).getPublicUrl(row.s3_path);
 
       return {
         id: row.id,
         fileName: decryptedMeta.filename,
-        mimeType: decryptedMeta.mime_type,
-        state: decryptedMeta.state,
-        city: decryptedMeta.city,
-        uploadDate: decryptedMeta.upload_date,
+        mimeType: decryptedMeta.mime_type || 'video/mp4', // Default to video/mp4 for vault assets
+        state: decryptedMeta.state || 'Unknown',
+        city: decryptedMeta.city || 'Unknown',
+        uploadDate: decryptedMeta.upload_date || 'Unknown',
         fileSize: row.file_size || 0,
         bucketUrl: publicUrl,
         s3Path: row.s3_path,
