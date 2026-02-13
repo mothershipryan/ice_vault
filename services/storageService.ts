@@ -269,6 +269,7 @@ export const storageService = {
       uploadDate: date,
       fileSize: file.size,
       bucketUrl: `${bucketName}/${s3Path}`,
+      s3Path: s3Path,
       encryptedKeyPayload: dbKeyPayload,
       recoveryKey: recoveryKeyHex,
       status: 'completed',
@@ -346,6 +347,24 @@ export const storageService = {
     }
   },
 
+  downloadFile: async (s3Path: string): Promise<Blob> => {
+    const bucketName = 'fuckicevault';
+    console.log(`[Vault] Downloading from storage: ${s3Path}`);
+
+    const { data, error } = await supabase
+      .storage
+      .from(bucketName)
+      .download(s3Path);
+
+    if (error) {
+      console.error("[Vault] Download error:", error);
+      throw new Error(`Failed to fetch encrypted asset: ${error.message}`);
+    }
+
+    if (!data) throw new Error("No data received from storage.");
+    return data;
+  },
+
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -394,10 +413,11 @@ export const storageService = {
           uploadDate: decryptedMeta.upload_date,
           fileSize: row.file_size || 0,
           bucketUrl: publicUrl,
+          s3Path: row.s3_path,
           encryptedKeyPayload: row.encrypted_aes_key,
           status: 'completed',
           hash: 'N/A'
-        };
+        } as UploadRecord;
       });
 
       const resolved = await Promise.all(decryptedPromises);

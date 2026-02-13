@@ -7,6 +7,7 @@ export interface UploadRecord {
   uploadDate: string;
   fileSize: number;
   bucketUrl: string;
+  s3Path?: string;
   status: 'pending' | 'uploading' | 'completed' | 'failed';
   hash?: string;
   recoveryKey?: string;

@@ -121,10 +121,8 @@ const RetrievalModule: React.FC = () => {
                     const btn = document.getElementById(`btn-${rec.id}`);
                     if (btn) btn.innerText = "Decrypting...";
 
-                    // 1. Fetch Encrypted Blob
-                    const response = await fetch(rec.bucketUrl);
-                    if (!response.ok) throw new Error("Failed to fetch encrypted asset");
-                    const encryptedBlob = await response.blob();
+                    // 1. Fetch Encrypted Blob securely via Supabase Storage
+                    const encryptedBlob = await storageService.downloadFile(rec.s3Path || "");
 
                     // 2. Retrieve the DEK (using Passphrase or Legacy Key)
                     const key = await storageService.retrieveRecordKey(
