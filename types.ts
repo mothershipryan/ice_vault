@@ -12,6 +12,7 @@ export interface UploadRecord {
   hash?: string;
   recoveryKey?: string;
   encryptedKeyPayload?: string;
+  mimeType?: string;
 }
 
 export enum AppStatus {

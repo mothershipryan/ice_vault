@@ -175,6 +175,19 @@ const encryptFileInChunks = async (
   return new Blob(encryptedParts);
 };
 
+// Helper: Guess MIME type from filename extension
+const guessMimeType = (filename: string): string => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'mp4': return 'video/mp4';
+    case 'mov': return 'video/quicktime';
+    case 'avi': return 'video/x-msvideo';
+    case 'mkv': return 'video/x-matroska';
+    case 'webm': return 'video/webm';
+    default: return 'application/octet-stream';
+  }
+};
+
 export const storageService = {
   uploadVideo: async (
     file: File,
@@ -208,7 +221,8 @@ export const storageService = {
     const searchKey = await deriveSearchKey(passphrase, salt);
 
     const wrappedKeyStr = await wrapKey(secretKey, kek);
-    const metadataMsg = { filename: file.name, upload_date: date, state, city };
+    // Include mime_type in metadata
+    const metadataMsg = { filename: file.name, mime_type: file.type, upload_date: date, state, city };
     const encryptedMetadata = await encryptMetadata(metadataMsg, kek);
 
     const blindIndexState = await calculateBlindIndex(state, searchKey);
@@ -264,6 +278,7 @@ export const storageService = {
     return {
       id: "SUCCESS",
       fileName: file.name,
+      mimeType: file.type,
       state: state,
       city: city,
       uploadDate: date,
@@ -312,12 +327,12 @@ export const storageService = {
     );
   },
 
-  decryptFile: async (encryptedBlob: Blob, key: CryptoKey): Promise<Blob> => {
+  decryptFile: async (encryptedBlob: Blob, key: CryptoKey, mimeType?: string): Promise<Blob> => {
     const CHUNK_SIZE = 5 * 1024 * 1024;
     const ENCRYPTED_CHUNK_EXTRA = 12 + 16;
     const ENCRYPTED_PART_SIZE = CHUNK_SIZE + ENCRYPTED_CHUNK_EXTRA;
 
-    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes...`);
+    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes (MIME: ${mimeType || 'default'})...`);
     const decryptedParts: Blob[] = [];
     let offset = 0;
 
@@ -341,7 +356,7 @@ export const storageService = {
         decryptedParts.push(new Blob([decryptedBuffer]));
         offset += currentPartSize;
       }
-      return new Blob(decryptedParts);
+      return new Blob(decryptedParts, { type: mimeType || 'application/octet-stream' });
     } catch (e: any) {
       console.error("[Vault] Decryption Detail:", e);
       throw new Error(`Decryption failed: ${e.message || 'Check Key'}`);
@@ -398,7 +413,7 @@ export const storageService = {
     if (allRows.length === 0) return [];
 
     const decryptedPromises = allRows.map(async (row: any) => {
-      let decryptedMeta = { filename: 'Encrypted', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
+      let decryptedMeta = { filename: 'Encrypted', mime_type: '', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
       let isValid = true;
       let metdataDecrypted = false;
 
@@ -410,17 +425,20 @@ export const storageService = {
           const kek = await deriveKEK(passphrase, salt);
 
           if (row.is_legacy) {
-            // Legacy records had clear metadata in columns but maybe we encrypted it too? 
-            // Usually legacy had: filename, state, city, upload_date plain.
             decryptedMeta = {
               filename: row.filename || 'Legacy',
+              mime_type: guessMimeType(row.filename || ''),
               state: row.state || 'Locked',
               city: row.city || 'Locked',
               upload_date: row.upload_date || 'Locked'
             };
             metdataDecrypted = true;
           } else {
-            decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+            const meta = await decryptMetadata(row.encrypted_metadata, kek);
+            decryptedMeta = {
+              ...meta,
+              mime_type: meta.mime_type || guessMimeType(meta.filename || '')
+            };
             metdataDecrypted = true;
           }
 
@@ -432,6 +450,7 @@ export const storageService = {
           if (row.is_legacy) {
             decryptedMeta = {
               filename: row.filename || 'Encrypted',
+              mime_type: guessMimeType(row.filename || ''),
               state: row.state || 'Locked',
               city: row.city || 'Locked',
               upload_date: row.upload_date || 'Locked'
@@ -451,6 +470,7 @@ export const storageService = {
       return {
         id: row.id,
         fileName: decryptedMeta.filename,
+        mimeType: decryptedMeta.mime_type,
         state: decryptedMeta.state,
         city: decryptedMeta.city,
         uploadDate: decryptedMeta.upload_date,

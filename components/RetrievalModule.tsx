@@ -134,14 +134,24 @@ const RetrievalModule: React.FC = () => {
                       vaultKey
                     );
 
-                    // 3. Decrypt
-                    const decryptedBlob = await storageService.decryptFile(encryptedBlob, key);
+                    // 3. Decrypt (passing MIME type to preserve file format)
+                    const decryptedBlob = await storageService.decryptFile(
+                      encryptedBlob,
+                      key,
+                      rec.mimeType
+                    );
 
                     // 4. Download
                     const url = URL.createObjectURL(decryptedBlob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = rec.fileName.replace('.enc', ''); // Restore original name
+
+                    // Restore original name without .enc (if present), but keep extension
+                    let finalName = rec.fileName;
+                    if (finalName.toLowerCase().endsWith('.enc')) {
+                      finalName = finalName.slice(0, -4);
+                    }
+                    a.download = finalName;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
