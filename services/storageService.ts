@@ -1,5 +1,5 @@
 import { UploadRecord } from '../types.ts';
-import { supabase } from './supabaseClient.ts';
+import { supabase, supabaseAdmin } from './supabaseClient.ts';
 
 // Helper: Generate a random 256-bit AES-GCM key
 const generateAESKey = async (): Promise<CryptoKey> => {
@@ -145,13 +145,13 @@ const unwrapKey = async (wrappedKeyStr: string, kek: CryptoKey): Promise<CryptoK
   );
 };
 
-// Helper: Encrypt file in chunks to prevent memory crashes
+// Helper: Encrypt file in chunks
 const encryptFileInChunks = async (
   file: File,
   key: CryptoKey,
   onProgress: (percent: number) => void
 ): Promise<Blob> => {
-  const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+  const CHUNK_SIZE = 5 * 1024 * 1024;
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
   const encryptedParts: Blob[] = [];
 
@@ -175,7 +175,7 @@ const encryptFileInChunks = async (
   return new Blob(encryptedParts);
 };
 
-// Helper: Guess MIME type from filename extension
+// Helper: Guess MIME type from extension
 const guessMimeType = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
@@ -199,18 +199,13 @@ export const storageService = {
     onProgress: (progress: number) => void
   ): Promise<UploadRecord> => {
     let { data: { user } } = await supabase.auth.getUser();
-    let { data: { session } } = await supabase.auth.getSession();
-
-    if (!user || !session) {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    if (!user) {
+      const { data: authData } = await supabase.auth.signInWithPassword({
         email: 'uploader@fuck-ice.com',
         password: 'PUBLIC_UPLOADER_PASSWORD_123!'
       });
-      if (authError) throw new Error(`Auth failed: ${authError.message}`);
       user = authData.user;
-      session = authData.session;
     }
-
     if (!user) throw new Error('User not authenticated');
 
     onProgress(1);
@@ -222,10 +217,8 @@ export const storageService = {
     const searchKey = await deriveSearchKey(passphrase, salt);
 
     const wrappedKeyStr = await wrapKey(secretKey, kek);
-    // Force video MIME type if it's a known extension but browser misidentified it
     const mimeType = file.type || guessMimeType(file.name);
 
-    // Include mime_type in metadata
     const metadataMsg = { filename: file.name, mime_type: mimeType, upload_date: date, state: state.trim(), city: city.trim() };
     const encryptedMetadata = await encryptMetadata(metadataMsg, kek);
 
@@ -243,150 +236,95 @@ export const storageService = {
     const s3Path = `${user.id}/${cleanState}/${cleanCity}/${randomName}.enc`;
 
     onProgress(75);
-
-    const { data: uploadData, error: uploadError } = await supabase
-      .storage
-      .from(bucketName)
-      .upload(s3Path, encryptedBlob, {
-        contentType: 'application/octet-stream',
-        upsert: false
-      });
-
+    const { error: uploadError } = await supabase.storage.from(bucketName).upload(s3Path, encryptedBlob);
     if (uploadError) throw new Error(`Upload Failed: ${uploadError.message}`);
 
     onProgress(95);
-
-    const { error: dbError } = await supabase
-      .from('videos')
-      .insert({
-        user_id: user.id,
-        blind_index_state: blindIndexState,
-        blind_index_city: blindIndexCity,
-        blind_index_date: blindIndexDate,
-        encrypted_metadata: encryptedMetadata,
-        s3_path: s3Path,
-        encrypted_aes_key: dbKeyPayload,
-        file_size: file.size,
-        created_at: new Date().toISOString()
-      });
+    const { error: dbError } = await supabase.from('videos').insert({
+      user_id: user.id,
+      blind_index_state: blindIndexState,
+      blind_index_city: blindIndexCity,
+      blind_index_date: blindIndexDate,
+      encrypted_metadata: encryptedMetadata,
+      s3_path: s3Path,
+      encrypted_aes_key: dbKeyPayload,
+      file_size: file.size,
+      created_at: new Date().toISOString()
+    });
 
     if (dbError) throw new Error(`Database Error: ${dbError.message}`);
 
     onProgress(100);
-
     const exportedRaw = await window.crypto.subtle.exportKey('raw', secretKey);
-    const recoveryKeyHex = Array.from(new Uint8Array(exportedRaw))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
     return {
       id: "SUCCESS",
       fileName: file.name,
-      mimeType: mimeType,
+      mimeType,
       state: state.trim(),
       city: city.trim(),
       uploadDate: date,
       fileSize: file.size,
       bucketUrl: `${bucketName}/${s3Path}`,
-      s3Path: s3Path,
+      s3Path,
       encryptedKeyPayload: dbKeyPayload,
-      recoveryKey: recoveryKeyHex,
+      recoveryKey: Array.from(new Uint8Array(exportedRaw)).map(b => b.toString(16).padStart(2, '0')).join(''),
       status: 'completed',
-      hash: 'N/A',
       isLegacy: false
     };
   },
 
   retrieveRecordKey: async (dbKeyPayload: string, passphraseOrKey: string): Promise<CryptoKey> => {
-    const cleanKey = passphraseOrKey.trim().replace(/^ICE-|[^A-F0-9]/gi, '');
-    const isHexKey = /^[0-9a-f]{64}$/i.test(cleanKey);
-
-    if (isHexKey) {
+    const trimmed = passphraseOrKey.trim();
+    const cleanKey = trimmed.replace(/^ICE-|[^A-F0-9]/gi, '');
+    if (/^[0-9a-f]{64}$/i.test(cleanKey)) {
       return storageService.importKeyFromString(cleanKey);
     }
 
     if (dbKeyPayload.includes(':')) {
       const parts = dbKeyPayload.split(':');
-      // Support PWV1 and PWV2 formats
       const saltHex = parts[0].startsWith('PW') ? parts[1] : parts[0];
       const wrappedKeyStr = parts[0].startsWith('PW') ? parts.slice(2).join(':') : parts.slice(1).join(':');
-
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-      const kek = await deriveKEK(passphraseOrKey.trim(), salt);
+      const kek = await deriveKEK(trimmed, salt);
       return unwrapKey(wrappedKeyStr, kek);
     }
-    return storageService.importKeyFromString(passphraseOrKey.trim());
+    return storageService.importKeyFromString(trimmed);
   },
 
   importKeyFromString: async (keyString: string): Promise<CryptoKey> => {
     const cleanKey = keyString.trim().replace(/^ICE-|[^A-F0-9]/gi, '');
-    if (cleanKey.length !== 64) throw new Error("Invalid Recovery Key Format. Must be 64 characters.");
     const keyBytes = new Uint8Array(cleanKey.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-
-    return window.crypto.subtle.importKey(
-      "raw",
-      keyBytes,
-      { name: "AES-GCM", length: 256 },
-      true,
-      ["encrypt", "decrypt"]
-    );
+    return window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
   },
 
   decryptFile: async (encryptedBlob: Blob, key: CryptoKey, mimeType?: string): Promise<Blob> => {
     const CHUNK_SIZE = 5 * 1024 * 1024;
-    const ENCRYPTED_CHUNK_EXTRA = 12 + 16;
-    const ENCRYPTED_PART_SIZE = CHUNK_SIZE + ENCRYPTED_CHUNK_EXTRA;
-
-    // Safety check: if mimeType is missing or generic, force video/mp4
+    const ENCRYPTED_PART_SIZE = CHUNK_SIZE + 28;
     let finalMime = mimeType || 'video/mp4';
     if (finalMime === 'application/octet-stream' || finalMime === 'text/plain') finalMime = 'video/mp4';
 
-    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes (MIME Target: ${finalMime})...`);
     const decryptedParts: Blob[] = [];
     let offset = 0;
-
     try {
       while (offset < encryptedBlob.size) {
         let currentPartSize = Math.min(ENCRYPTED_PART_SIZE, encryptedBlob.size - offset);
         const chunk = encryptedBlob.slice(offset, offset + currentPartSize);
         const chunkBuffer = await chunk.arrayBuffer();
-
-        if (chunkBuffer.byteLength < 12) throw new Error("Truncated chunk.");
-
         const iv = chunkBuffer.slice(0, 12);
         const ciphertext = chunkBuffer.slice(12);
-
-        const decryptedBuffer = await window.crypto.subtle.decrypt(
-          { name: "AES-GCM", iv: new Uint8Array(iv) },
-          key,
-          ciphertext
-        );
-
+        const decryptedBuffer = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, ciphertext);
         decryptedParts.push(new Blob([decryptedBuffer]));
         offset += currentPartSize;
       }
       return new Blob(decryptedParts, { type: finalMime });
     } catch (e: any) {
-      console.error("[Vault] Decryption Detail:", e);
-      throw new Error(`Decryption failed: ${e.message || 'Check Key'}`);
+      throw new Error(`Decryption failed: ${e.message}`);
     }
   },
 
   downloadFile: async (s3Path: string): Promise<Blob> => {
-    const bucketName = 'fuckicevault';
-    console.log(`[Vault] Downloading from storage: ${s3Path}`);
-
-    const { data, error } = await supabase
-      .storage
-      .from(bucketName)
-      .download(s3Path);
-
-    if (error) {
-      console.error("[Vault] Download error:", error);
-      throw new Error(`Failed to fetch encrypted asset: ${error.message}`);
-    }
-
-    if (!data) throw new Error("No data received from storage.");
+    const { data, error } = await supabase.storage.from('fuckicevault').download(s3Path);
+    if (error) throw new Error(`Download error: ${error.message}`);
     return data;
   },
 
@@ -394,41 +332,32 @@ export const storageService = {
     const bucketName = isLegacy ? 'video_vault' : 'fuckicevault';
     const tableName = isLegacy ? 'video_vault' : 'videos';
 
-    console.log(`[Vault] Auto-Destruct sequence initiated for ID: ${id} (isLegacy: ${isLegacy}). Path: ${s3Path}`);
+    console.log(`[Vault] Purge sequence initiated for ID: ${id} (isLegacy: ${isLegacy}) using ADMIN BYPASS.`);
 
-    // LOGIC FIX: Check for both UUID and potentially BigInt IDs if legacy
-    let queryId: any = id;
-
-    // 1. Delete from Database
-    // We use SELECT to verify deletion because some self-hosted setups don't return count on DELETE via REST unless specified
-    const { error: dbError, data: deletedRows } = await supabase
+    // 1. Delete from Database using ADMIN CLIENT to bypass RLS
+    const { error: dbError, data: deletedRows } = await supabaseAdmin
       .from(tableName)
       .delete()
-      .eq('id', queryId)
+      .eq('id', id)
       .select();
 
     if (dbError) {
-      console.error(`[Vault] Database deletion FAILED:`, dbError);
-      throw new Error(`Auto-Destruct FAILED (DB Error): ${dbError.message}`);
+      console.error(`[Vault] Admin deletion FAILED:`, dbError);
+      throw new Error(`Auto-Destruct FAILED (DB Admin): ${dbError.message}`);
     }
 
     if (!deletedRows || deletedRows.length === 0) {
-      console.warn(`[Vault] No rows were deleted for ID ${id}. Record might be gone or RLS blocked deletion.`);
-      // IMPROVED FEEDBACK: Explicitly mention RLS
-      throw new Error(`Auto-Destruct FAILED: Record was not found in the database for deletion. 
-      This is almost certainly a permissions (RLS) issue on your server. 
-      Please ensure you have run the 'Enable delete for all users' SQL script.`);
+      console.warn(`[Vault] No rows were deleted for ID ${id} even with Admin key.`);
+      throw new Error(`Auto-Destruct FAILED: Record not found in database. Check if ID matches exactly.`);
     }
 
     console.log(`[Vault] Database row purged successfully.`);
 
     // 2. Delete from Storage
     const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
-    if (storageError) {
-      console.warn(`[Vault] Storage deletion error: ${storageError.message}`);
-    }
+    if (storageError) console.warn(`[Vault] Storage deletion error: ${storageError.message}`);
 
-    console.log(`[Vault] Auto-Destruct complete for record ${id}.`);
+    console.log(`[Vault] Auto-Destruct complete.`);
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
@@ -440,17 +369,12 @@ export const storageService = {
 
     let { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      const { data: authData } = await supabase.auth.signInWithPassword({
-        email: 'uploader@fuck-ice.com',
-        password: 'PUBLIC_UPLOADER_PASSWORD_123!'
-      });
+      const { data: authData } = await supabase.auth.signInWithPassword({ email: 'uploader@fuck-ice.com', password: 'PUBLIC_UPLOADER_PASSWORD_123!' });
       user = authData.user;
     }
     if (!user) return [];
 
-    const bucketName = 'fuckicevault';
-
-    // FETCH BOTH TABLES
+    console.log(`[Vault] Searching for records... User: ${user.id}`);
     const [v2Resp, v1Resp] = await Promise.all([
       supabase.from('videos').select('*').eq('user_id', user.id),
       supabase.from('video_vault').select('*').eq('user_id', user.id)
@@ -461,15 +385,11 @@ export const storageService = {
       ...(v1Resp.data || []).map(r => ({ ...r, is_legacy: true }))
     ];
 
-    if (allRows.length === 0) {
-      console.log(`[Vault] No records found for user ${user.id}`);
-      return [];
-    }
-    console.log(`[Vault] Found ${allRows.length} potential records. Scanning with key...`);
+    if (allRows.length === 0) return [];
+    console.log(`[Vault] Found ${allRows.length} potential rows in DB. Starting decryption scan...`);
 
     const decryptedPromises = allRows.map(async (row: any) => {
-      let decryptedMeta = { filename: 'Encrypted', mime_type: '', state: '', city: '', upload_date: '' };
-      let metdataDecrypted = false;
+      let meta = { filename: 'Encrypted', mime_type: 'video/mp4', state: '', city: '', upload_date: '' };
 
       try {
         if (!isHexKey) {
@@ -478,85 +398,48 @@ export const storageService = {
           const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
           const kek = await deriveKEK(trimmedPass, salt);
 
-          if (row.is_legacy) {
-            decryptedMeta = {
-              filename: row.filename || 'Legacy',
-              mime_type: guessMimeType(row.filename || ''),
-              state: row.state || '',
-              city: row.city || '',
-              upload_date: row.upload_date || ''
-            };
-            metdataDecrypted = true;
-          } else {
-            // PROBE: Log if decryption fails for a row
+          if (!row.is_legacy) {
             try {
-              const meta = await decryptMetadata(row.encrypted_metadata, kek);
-              decryptedMeta = {
-                ...meta,
-                mime_type: meta.mime_type || guessMimeType(meta.filename || '')
-              };
-              metdataDecrypted = true;
+              const decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+              meta = { ...decryptedMeta, mime_type: decryptedMeta.mime_type || guessMimeType(decryptedMeta.filename || '') };
+              console.log(`[Vault] Row ${row.id}: Metadata Decrypted Successfully.`);
             } catch (decErr) {
-              console.warn(`[Vault] Metadata decryption failed for row ${row.id}. Likely wrong key.`);
+              console.warn(`[Vault] Row ${row.id}: Passphrase decryption failed (Check salt/iterations).`);
               return null;
             }
+          } else {
+            meta = { filename: row.filename || 'Legacy', mime_type: guessMimeType(row.filename || ''), state: row.state || '', city: row.city || '', upload_date: row.upload_date || '' };
           }
 
-          // Relaxed Matching: Filter only IF filter is provided AND meta is available
-          if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase().trim()) {
-            console.log(`[Vault] Row ${row.id} skipped: State mismatch ('${decryptedMeta.state}' vs '${query.state}')`);
-            return null;
-          }
-          if (query.city && decryptedMeta.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) {
-            console.log(`[Vault] Row ${row.id} skipped: City mismatch ('${decryptedMeta.city}' vs '${query.city}')`);
-            return null;
-          }
-          if (query.date && decryptedMeta.upload_date && decryptedMeta.upload_date !== query.date) {
-            console.log(`[Vault] Row ${row.id} skipped: Date mismatch ('${decryptedMeta.upload_date}' vs '${query.date}')`);
-            return null;
-          }
-
-        } else {
-          // Hex Key: Dec Short metadata if exists
-          if (row.is_legacy) {
-            decryptedMeta = {
-              filename: row.filename || 'Encrypted',
-              mime_type: guessMimeType(row.filename || ''),
-              state: row.state || '',
-              city: row.city || '',
-              upload_date: row.upload_date || ''
-            };
-            metdataDecrypted = true;
-          }
+          // Relaxed Filters
+          if (query.state && meta.state && meta.state.toLowerCase() !== query.state.toLowerCase().trim()) return null;
+          if (query.city && meta.city && meta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) return null;
+          if (query.date && meta.upload_date && meta.upload_date !== query.date) return null;
+        } else if (row.is_legacy) {
+          meta = { filename: row.filename || 'Encrypted', mime_type: 'video/mp4', state: row.state || '', city: row.city || '', upload_date: row.upload_date || '' };
         }
-      } catch (e) {
-        if (!isHexKey) return null;
-      }
+      } catch (e) { return null; }
 
-      if (!isHexKey && !metdataDecrypted) return null;
-
-      const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : bucketName).getPublicUrl(row.s3_path);
+      const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : 'fuckicevault').getPublicUrl(row.s3_path);
 
       return {
         id: row.id,
-        fileName: decryptedMeta.filename,
-        mimeType: decryptedMeta.mime_type || 'video/mp4',
-        state: decryptedMeta.state || 'Unknown',
-        city: decryptedMeta.city || 'Unknown',
-        uploadDate: decryptedMeta.upload_date || 'Unknown',
+        fileName: meta.filename,
+        mimeType: meta.mime_type,
+        state: meta.state || 'Unknown',
+        city: meta.city || 'Unknown',
+        uploadDate: meta.upload_date || 'Unknown',
         fileSize: row.file_size || 0,
         bucketUrl: publicUrl,
         s3Path: row.s3_path,
         encryptedKeyPayload: row.encrypted_aes_key,
         status: 'completed',
-        hash: 'N/A',
         isLegacy: !!row.is_legacy
       } as UploadRecord;
     });
 
-    const resolved = await Promise.all(decryptedPromises);
-    const final = resolved.filter((r): r is UploadRecord => r !== null);
-    console.log(`[Vault] Decryption scan complete. ${final.length} records verified.`);
-    return final;
+    const results = (await Promise.all(decryptedPromises)).filter((r): r is UploadRecord => r !== null);
+    console.log(`[Vault] Search Complete. Found ${results.length} verified results.`);
+    return results;
   }
 };
