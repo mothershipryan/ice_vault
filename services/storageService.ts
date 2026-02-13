@@ -225,7 +225,7 @@ export const storageService = {
 
     const bucketName = 'fuckicevault';
     const randomName = crypto.randomUUID();
-    const s3Path = `${randomName}.enc`; // Path inside bucket (no leading slash for storage-js usually)
+    const s3Path = `${user.id}/${randomName}.enc`; // Prefix with User ID for cleaner RLS policies
     onProgress(75);
 
     // 1. Upload to Supabase Storage (Proxies to S3/Disk)
