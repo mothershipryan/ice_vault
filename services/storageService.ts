@@ -1,7 +1,7 @@
 import { UploadRecord } from '../types.ts';
 import { supabase } from './supabaseClient.ts';
 
-const s3Endpoint = import.meta.env.VITE_S3_ENDPOINT;
+// Manual s3Endpoint removed in favor of supabase.storage.getPublicUrl()
 
 // Helper: Generate a random 256-bit AES-GCM key
 const generateAESKey = async (): Promise<CryptoKey> => {
@@ -339,6 +339,7 @@ export const storageService = {
 
     if (!user) return [];
 
+    const bucketName = 'fuckicevault';
     let legacyRecords: any[] = [];
     let hardenedRecords: any[] = [];
 
@@ -411,6 +412,8 @@ export const storageService = {
 
           if (!isValid) return null;
 
+          const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(row.s3_path);
+
           return {
             id: row.id,
             fileName: decryptedMeta.filename,
@@ -418,7 +421,7 @@ export const storageService = {
             city: decryptedMeta.city,
             uploadDate: decryptedMeta.upload_date,
             fileSize: row.file_size || 0,
-            bucketUrl: `${s3Endpoint}/${row.s3_path}`, // Construct URL from endpoint + path
+            bucketUrl: publicUrl,
             encryptedKeyPayload: row.encrypted_aes_key,
             status: 'completed',
             hash: 'N/A'
@@ -431,17 +434,20 @@ export const storageService = {
     } catch (e) { console.error("Hardened fetch error", e); }
 
     // Combine
-    return [...legacyRecords.map((row: any) => ({
-      id: row.id,
-      fileName: row.filename || 'Legacy Video',
-      state: row.state,
-      city: row.city,
-      uploadDate: row.upload_date,
-      fileSize: row.file_size || 0,
-      bucketUrl: `${s3Endpoint}${row.s3_path}`,
-      encryptedKeyPayload: row.encrypted_aes_key,
-      status: 'completed',
-      hash: 'N/A'
-    })), ...hardenedRecords];
+    return [...legacyRecords.map((row: any) => {
+      const { data: { publicUrl } } = supabase.storage.from('video_vault').getPublicUrl(row.s3_path);
+      return {
+        id: row.id,
+        fileName: row.filename || 'Legacy Video',
+        state: row.state,
+        city: row.city,
+        uploadDate: row.upload_date,
+        fileSize: row.file_size || 0,
+        bucketUrl: publicUrl,
+        encryptedKeyPayload: row.encrypted_aes_key,
+        status: 'completed',
+        hash: 'N/A'
+      };
+    }), ...hardenedRecords];
   }
 };
