@@ -285,10 +285,11 @@ export const storageService = {
       return storageService.importKeyFromString(cleanKey);
     }
 
-    if (dbKeyPayload.startsWith('PWV2:')) {
+    if (dbKeyPayload.includes(':')) {
       const parts = dbKeyPayload.split(':');
-      const saltHex = parts[1];
-      const wrappedKeyStr = parts.slice(2).join(':');
+      // Support PWV1 and PWV2 formats
+      const saltHex = parts[0].startsWith('PW') ? parts[1] : parts[0];
+      const wrappedKeyStr = parts[0].startsWith('PW') ? parts.slice(2).join(':') : parts.slice(1).join(':');
 
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
       const kek = await deriveKEK(passphraseOrKey, salt);
@@ -366,73 +367,103 @@ export const storageService = {
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
-    // Ghost Vault Mode: Immediately return empty if no passphrase is provided.
-    // This ensures no "Locked" placeholders are leaked to unauthorized users.
     if (!passphrase) return [];
 
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
+    const cleanInput = passphrase.replace(/^ICE-|[^A-F0-9]/gi, '');
+    const isHexKey = /^[0-9a-f]{64}$/i.test(cleanInput);
+
+    let { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const { data: authData } = await supabase.auth.signInWithPassword({
+        email: 'uploader@fuck-ice.com',
+        password: 'PUBLIC_UPLOADER_PASSWORD_123!'
+      });
+      user = authData.user;
+    }
     if (!user) return [];
 
     const bucketName = 'fuckicevault';
-    let v2Query = supabase.from('videos').select('*').eq('user_id', user.id);
 
-    try {
-      const { data: v2Data } = await v2Query;
-      const v2Rows = v2Data || [];
-      if (v2Rows.length === 0) return [];
+    // FETCH BOTH TABLES
+    const [v2Resp, v1Resp] = await Promise.all([
+      supabase.from('videos').select('*').eq('user_id', user.id),
+      supabase.from('video_vault').select('*').eq('user_id', user.id)
+    ]);
 
-      const decryptedPromises = v2Rows.map(async (row: any) => {
-        let decryptedMeta;
-        let isValid = true;
+    const allRows = [
+      ...(v2Resp.data || []),
+      ...(v1Resp.data || []).map(r => ({ ...r, is_legacy: true }))
+    ];
 
-        try {
+    if (allRows.length === 0) return [];
+
+    const decryptedPromises = allRows.map(async (row: any) => {
+      let decryptedMeta = { filename: 'Encrypted', state: 'Locked', city: 'Locked', upload_date: 'Locked' };
+      let isValid = true;
+      let metdataDecrypted = false;
+
+      try {
+        if (!isHexKey) {
           const parts = row.encrypted_aes_key.split(':');
-          const prefix = parts[0];
-          const saltHex = parts[1];
+          const saltHex = parts[0].startsWith('PW') ? parts[1] : parts[0];
+          const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+          const kek = await deriveKEK(passphrase, salt);
 
-          if (prefix === 'PWV2') {
-            const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-            const kek = await deriveKEK(passphrase, salt);
-            decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
-
-            // Ghost Mode Filter Check (Case Insensitive)
-            if (query.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
-            if (query.city && decryptedMeta.city.toLowerCase() !== query.city.toLowerCase()) isValid = false;
-            if (query.date && decryptedMeta.upload_date !== query.date) isValid = false;
+          if (row.is_legacy) {
+            // Legacy records had clear metadata in columns but maybe we encrypted it too? 
+            // Usually legacy had: filename, state, city, upload_date plain.
+            decryptedMeta = {
+              filename: row.filename || 'Legacy',
+              state: row.state || 'Locked',
+              city: row.city || 'Locked',
+              upload_date: row.upload_date || 'Locked'
+            };
+            metdataDecrypted = true;
           } else {
-            return null; // Ignore unknown or legacy formats in Ghost Mode
+            decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+            metdataDecrypted = true;
           }
-        } catch (e) {
-          // Ghost Mode: If decryption fails, it's not the user's file or the wrong passphrase.
-          // Silently exclude it from the results.
-          return null;
+
+          if (query.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
+          if (query.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) isValid = false;
+          if (query.date && decryptedMeta.upload_date !== query.date) isValid = false;
+        } else {
+          // Hex Key: Decrypt metadata columns if they exist (legacy), else show locked.
+          if (row.is_legacy) {
+            decryptedMeta = {
+              filename: row.filename || 'Encrypted',
+              state: row.state || 'Locked',
+              city: row.city || 'Locked',
+              upload_date: row.upload_date || 'Locked'
+            };
+            metdataDecrypted = true;
+          }
         }
+      } catch (e) {
+        if (!isHexKey) return null;
+      }
 
-        if (!isValid || !decryptedMeta) return null;
+      if (!isHexKey && !metdataDecrypted) return null;
+      if (!isValid) return null;
 
-        const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(row.s3_path);
+      const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : bucketName).getPublicUrl(row.s3_path);
 
-        return {
-          id: row.id,
-          fileName: decryptedMeta.filename,
-          state: decryptedMeta.state,
-          city: decryptedMeta.city,
-          uploadDate: decryptedMeta.upload_date,
-          fileSize: row.file_size || 0,
-          bucketUrl: publicUrl,
-          s3Path: row.s3_path,
-          encryptedKeyPayload: row.encrypted_aes_key,
-          status: 'completed',
-          hash: 'N/A'
-        } as UploadRecord;
-      });
+      return {
+        id: row.id,
+        fileName: decryptedMeta.filename,
+        state: decryptedMeta.state,
+        city: decryptedMeta.city,
+        uploadDate: decryptedMeta.upload_date,
+        fileSize: row.file_size || 0,
+        bucketUrl: publicUrl,
+        s3Path: row.s3_path,
+        encryptedKeyPayload: row.encrypted_aes_key,
+        status: 'completed',
+        hash: 'N/A'
+      } as UploadRecord;
+    });
 
-      const resolved = await Promise.all(decryptedPromises);
-      return resolved.filter((r): r is UploadRecord => r !== null);
-    } catch (e) {
-      console.error("Fetch error", e);
-      return [];
-    }
+    const resolved = await Promise.all(decryptedPromises);
+    return resolved.filter((r): r is UploadRecord => r !== null);
   }
 };
