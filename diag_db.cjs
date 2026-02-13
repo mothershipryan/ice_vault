@@ -1,11 +1,14 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'http://supabasekong-xwo48scwcs00owko44wwscwo.46.225.69.82.sslip.io/';
+// Try port 8000 (standard self-hosted Kong port)
+const supabaseUrl = 'http://46.225.69.82:8000';
 const supabaseKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDY4NjcwMCwiZXhwIjo0OTI2MzYwMzAwLCJyb2xlIjoiYW5vbiJ9.kTof1tUJr_RS41rgbZcWBortzcdqfn7kc36nFKqt5tg';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function inspect() {
+    console.log(`Checking ${supabaseUrl}...`);
+
     console.log("--- VIDEOS TABLE ---");
     const { data: videos, error: vErr } = await supabase.from('videos').select('*').limit(5);
     if (vErr) console.error("Videos Error:", vErr);

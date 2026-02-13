@@ -16,14 +16,15 @@ const RetrievalModule: React.FC = () => {
   const [vaultKey, setVaultKey] = useState('');
 
   const handleSearch = async () => {
-    if (!vaultKey) {
+    if (!vaultKey || !vaultKey.trim()) {
       alert("Ghost Vault: You must enter a Passphrase or Backup Key to find your files.");
       return;
     }
     setLoading(true);
     setHasSearched(true);
     try {
-      const data = await storageService.getRecords({ state: stateName || state, city, date }, vaultKey);
+      console.log(`[Vault] Scanning for records with key: ${vaultKey.slice(0, 3)}***`);
+      const data = await storageService.getRecords({ state: stateName || state, city, date }, vaultKey.trim());
       setResults(data);
     } catch (e) {
       console.error(e);
@@ -120,20 +121,21 @@ const RetrievalModule: React.FC = () => {
                   );
                   if (!confirmed) return;
 
+                  const btn = document.getElementById(`btn-${rec.id}`);
                   try {
-                    const btn = document.getElementById(`btn-${rec.id}`);
-                    if (btn) btn.innerText = "Processing...";
+                    if (btn) btn.innerText = "Processing Key...";
 
-                    // 1. Fetch Encrypted Blob securely via Supabase Storage
+                    // 1. Fetch Encrypted Blob
                     const encryptedBlob = await storageService.downloadFile(rec.s3Path || "");
 
-                    // 2. Retrieve the DEK (using Passphrase or Legacy Key)
+                    // 2. Retrieve the DEK
                     const key = await storageService.retrieveRecordKey(
                       (rec as any).encryptedKeyPayload,
-                      vaultKey
+                      vaultKey.trim()
                     );
 
-                    // 3. Decrypt (passing MIME type to preserve file format)
+                    // 3. Decrypt
+                    if (btn) btn.innerText = "Decrypting Asset...";
                     const decryptedBlob = await storageService.decryptFile(
                       encryptedBlob,
                       key,
@@ -145,7 +147,6 @@ const RetrievalModule: React.FC = () => {
                     const a = document.createElement('a');
                     a.href = url;
 
-                    // Restore original name without .enc (if present), but keep extension
                     let finalName = rec.fileName;
                     if (finalName.toLowerCase().endsWith('.enc')) {
                       finalName = finalName.slice(0, -4);
@@ -156,23 +157,18 @@ const RetrievalModule: React.FC = () => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
-                    if (btn) btn.innerText = "Burning Asset...";
+                    if (btn) btn.innerText = "Purging Vault...";
 
-                    // 5. Auto-Destruct (Permanent Deletion)
-                    try {
-                      await storageService.deleteRecord(rec.id, rec.s3Path || "", !!rec.isLegacy);
-                      // Remove from UI immediately
-                      setResults(prev => prev.filter(r => r.id !== rec.id));
-                    } catch (delError: any) {
-                      console.error("[Vault] Deletion failed:", delError);
-                      alert(`Download Successful, but Auto-Destruct failed: ${delError.message}. The record may still exist.`);
-                      if (btn) btn.innerText = "Purge Failed";
-                    }
+                    // 5. Auto-Destruct
+                    await storageService.deleteRecord(rec.id, rec.s3Path || "", !!rec.isLegacy);
+
+                    // Success: Remove from UI
+                    setResults(prev => prev.filter(r => r.id !== rec.id));
+                    console.log(`[Vault] Record ${rec.id} burned successfully.`);
                   } catch (err: any) {
                     console.error("Critical Retrieval Error:", err);
-                    alert(err.message || "Decryption Failed. Check your Key.");
-                    const btn = document.getElementById(`btn-${rec.id}`);
-                    if (btn) btn.innerText = "Download Failed";
+                    alert(`Action Failed: ${err.message}`);
+                    if (btn) btn.innerText = "Download/Purge Failed";
                   }
                 }}
                 id={`btn-${rec.id}`}
@@ -186,12 +182,12 @@ const RetrievalModule: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : (
+      ) : hasSearched ? (
         <div className="p-12 text-center bg-slate-950/30 rounded-3xl border border-dashed border-slate-800 space-y-2">
           <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">No matching assets materialized.</p>
-          <p className="text-slate-700 text-[10px] font-medium tracking-tight">Ensure your passphrase is correct and city/state match exactly.</p>
+          <p className="text-slate-700 text-[10px] font-medium tracking-tight">Ensure your passphrase is correct. Search criteria are now optional.</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

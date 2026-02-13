@@ -15,7 +15,7 @@ const deriveKEK = async (passphrase: string, salt: Uint8Array): Promise<CryptoKe
   const encoder = new TextEncoder();
   const passwordKey = await window.crypto.subtle.importKey(
     "raw",
-    encoder.encode(passphrase),
+    encoder.encode(passphrase.trim()),
     { name: "PBKDF2" },
     false,
     ["deriveKey"]
@@ -40,7 +40,7 @@ const deriveSearchKey = async (passphrase: string, salt: Uint8Array): Promise<Cr
   const encoder = new TextEncoder();
   const passwordKey = await window.crypto.subtle.importKey(
     "raw",
-    encoder.encode(passphrase),
+    encoder.encode(passphrase.trim()),
     { name: "PBKDF2" },
     false,
     ["deriveKey"]
@@ -226,7 +226,7 @@ export const storageService = {
     const mimeType = file.type || guessMimeType(file.name);
 
     // Include mime_type in metadata
-    const metadataMsg = { filename: file.name, mime_type: mimeType, upload_date: date, state, city };
+    const metadataMsg = { filename: file.name, mime_type: mimeType, upload_date: date, state: state.trim(), city: city.trim() };
     const encryptedMetadata = await encryptMetadata(metadataMsg, kek);
 
     const blindIndexState = await calculateBlindIndex(state, searchKey);
@@ -283,8 +283,8 @@ export const storageService = {
       id: "SUCCESS",
       fileName: file.name,
       mimeType: mimeType,
-      state: state,
-      city: city,
+      state: state.trim(),
+      city: city.trim(),
       uploadDate: date,
       fileSize: file.size,
       bucketUrl: `${bucketName}/${s3Path}`,
@@ -298,7 +298,7 @@ export const storageService = {
   },
 
   retrieveRecordKey: async (dbKeyPayload: string, passphraseOrKey: string): Promise<CryptoKey> => {
-    const cleanKey = passphraseOrKey.replace(/^ICE-|[^A-F0-9]/gi, '');
+    const cleanKey = passphraseOrKey.trim().replace(/^ICE-|[^A-F0-9]/gi, '');
     const isHexKey = /^[0-9a-f]{64}$/i.test(cleanKey);
 
     if (isHexKey) {
@@ -312,14 +312,14 @@ export const storageService = {
       const wrappedKeyStr = parts[0].startsWith('PW') ? parts.slice(2).join(':') : parts.slice(1).join(':');
 
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-      const kek = await deriveKEK(passphraseOrKey, salt);
+      const kek = await deriveKEK(passphraseOrKey.trim(), salt);
       return unwrapKey(wrappedKeyStr, kek);
     }
-    return storageService.importKeyFromString(passphraseOrKey);
+    return storageService.importKeyFromString(passphraseOrKey.trim());
   },
 
   importKeyFromString: async (keyString: string): Promise<CryptoKey> => {
-    const cleanKey = keyString.replace(/^ICE-|[^A-F0-9]/gi, '');
+    const cleanKey = keyString.trim().replace(/^ICE-|[^A-F0-9]/gi, '');
     if (cleanKey.length !== 64) throw new Error("Invalid Recovery Key Format. Must be 64 characters.");
     const keyBytes = new Uint8Array(cleanKey.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 
@@ -337,11 +337,11 @@ export const storageService = {
     const ENCRYPTED_CHUNK_EXTRA = 12 + 16;
     const ENCRYPTED_PART_SIZE = CHUNK_SIZE + ENCRYPTED_CHUNK_EXTRA;
 
-    // Safety check: if mimeType is missing or generic, try to force video if it's likely a video
+    // Safety check: if mimeType is missing or generic, force video/mp4 as vault assets are rarely text
     let finalMime = mimeType || 'video/mp4';
-    if (finalMime === 'application/octet-stream') finalMime = 'video/mp4';
+    if (finalMime === 'application/octet-stream' || finalMime === 'text/plain') finalMime = 'video/mp4';
 
-    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes (MIME: ${finalMime})...`);
+    console.log(`[Vault] Decrypting ${encryptedBlob.size} bytes (MIME Target: ${finalMime})...`);
     const decryptedParts: Blob[] = [];
     let offset = 0;
 
@@ -394,33 +394,45 @@ export const storageService = {
     const bucketName = isLegacy ? 'video_vault' : 'fuckicevault';
     const tableName = isLegacy ? 'video_vault' : 'videos';
 
-    console.log(`[Vault] Auto-Destruct sequence initiated for ID: ${id} (Legacy: ${isLegacy}). Path: ${s3Path}`);
+    console.log(`[Vault] Auto-Destruct sequence initiated for ID: ${id} (isLegacy: ${isLegacy}). Path: ${s3Path}`);
 
-    // LOGIC FIX: Always delete from Database first to ensure record is gone even if storage fails
-    // or vice versa. Usually DB first is better for privacy.
+    // LOGIC FIX: Check for both UUID and potentially BigInt IDs if legacy
+    let queryId: any = id;
 
     // 1. Delete from Database
-    const { error: dbError, count } = await supabase.from(tableName).delete().eq('id', id);
+    const { error: dbError, data: deletedRows } = await supabase
+      .from(tableName)
+      .delete()
+      .eq('id', queryId)
+      .select();
+
     if (dbError) {
       console.error(`[Vault] Database deletion FAILED:`, dbError);
-      throw new Error(`Auto-Destruct FAILED (DB): ${dbError.message}`);
+      throw new Error(`Auto-Destruct FAILED (DB Error): ${dbError.message}`);
     }
-    console.log(`[Vault] Database row purged. Row Count Affected: ${count}`);
+
+    if (!deletedRows || deletedRows.length === 0) {
+      console.warn(`[Vault] No rows were deleted for ID ${id}. Record might be gone or RLS blocked deletion.`);
+      // Throwing error here to notify the user in UI
+      throw new Error(`Auto-Destruct FAILED: Record was not found in the database for deletion. This might be a permission issue.`);
+    }
+
+    console.log(`[Vault] Database row purged successfully.`);
 
     // 2. Delete from Storage
     const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
     if (storageError) {
-      console.warn(`[Vault] Storage deletion error (possibly non-fatal): ${storageError.message}`);
-      // We don't throw here to avoid blocking UI if DB record is already gone.
+      console.warn(`[Vault] Storage deletion error: ${storageError.message}`);
     }
 
-    console.log(`[Vault] Post-retrieval purge complete for ${id}.`);
+    console.log(`[Vault] Auto-Destruct complete for record ${id}.`);
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
-    if (!passphrase) return [];
+    if (!passphrase || !passphrase.trim()) return [];
 
-    const cleanInput = passphrase.replace(/^ICE-|[^A-F0-9]/gi, '');
+    const trimmedPass = passphrase.trim();
+    const cleanInput = trimmedPass.replace(/^ICE-|[^A-F0-9]/gi, '');
     const isHexKey = /^[0-9a-f]{64}$/i.test(cleanInput);
 
     let { data: { user } } = await supabase.auth.getUser();
@@ -447,6 +459,7 @@ export const storageService = {
     ];
 
     if (allRows.length === 0) return [];
+    console.log(`[Vault] Found ${allRows.length} potential records. Scanning with key...`);
 
     const decryptedPromises = allRows.map(async (row: any) => {
       let decryptedMeta = { filename: 'Encrypted', mime_type: '', state: '', city: '', upload_date: '' };
@@ -457,7 +470,7 @@ export const storageService = {
           const parts = row.encrypted_aes_key.split(':');
           const saltHex = parts[0].startsWith('PW') ? parts[1] : parts[0];
           const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-          const kek = await deriveKEK(passphrase, salt);
+          const kek = await deriveKEK(trimmedPass, salt);
 
           if (row.is_legacy) {
             decryptedMeta = {
@@ -477,10 +490,8 @@ export const storageService = {
             metdataDecrypted = true;
           }
 
-          // IMPROVED LOGIC: Relaxed Matching
-          // We show the record if it matches PROVIDED filters, OR if filter is empty.
-          // This prevents records from being hidden due to missing metadata in old rows.
-          if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) return null;
+          // Relaxed Matching: Filter only IF filter is provided AND meta is available
+          if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase().trim()) return null;
           if (query.city && decryptedMeta.city && decryptedMeta.city.toLowerCase().trim() !== query.city.toLowerCase().trim()) return null;
           if (query.date && decryptedMeta.upload_date && decryptedMeta.upload_date !== query.date) return null;
 
@@ -506,9 +517,9 @@ export const storageService = {
       const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : bucketName).getPublicUrl(row.s3_path);
 
       return {
-        id: row.id,
+        id: row.id, // Keep original ID (string/int/uuid)
         fileName: decryptedMeta.filename,
-        mimeType: decryptedMeta.mime_type || 'video/mp4', // Default to video/mp4 for vault assets
+        mimeType: decryptedMeta.mime_type || 'video/mp4',
         state: decryptedMeta.state || 'Unknown',
         city: decryptedMeta.city || 'Unknown',
         uploadDate: decryptedMeta.upload_date || 'Unknown',
@@ -523,6 +534,8 @@ export const storageService = {
     });
 
     const resolved = await Promise.all(decryptedPromises);
-    return resolved.filter((r): r is UploadRecord => r !== null);
+    const final = resolved.filter((r): r is UploadRecord => r !== null);
+    console.log(`[Vault] Decryption scan complete. ${final.length} records verified.`);
+    return final;
   }
 };
