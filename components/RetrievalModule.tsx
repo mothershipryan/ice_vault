@@ -146,9 +146,9 @@ const RetrievalModule: React.FC = () => {
                     URL.revokeObjectURL(url);
 
                     if (btn) btn.innerText = "Decrypted & Downloaded";
-                  } catch (err) {
-                    console.error(err);
-                    alert("Decryption Failed. Check your Key.");
+                  } catch (err: any) {
+                    console.error("Critical Retrieval Error:", err);
+                    alert(err.message || "Decryption Failed. Check your Key.");
                     const btn = document.getElementById(`btn-${rec.id}`);
                     if (btn) btn.innerText = "Decryption Failed";
                   }
