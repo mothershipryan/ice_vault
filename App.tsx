@@ -138,13 +138,6 @@ const App: React.FC = () => {
               <p className="text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
                 SECURE STATE-INDEXED COLD VIDEO STORAGE
               </p>
-              <div className="flex justify-center">
-                <img
-                  src="/icemelt_150w.png"
-                  alt="IceMelt"
-                  className="w-16 h-auto drop-shadow-[0_0_15px_rgba(37,99,235,0.4)] opacity-80"
-                />
-              </div>
             </div>
           </div>
         )}

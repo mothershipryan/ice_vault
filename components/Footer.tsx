@@ -27,6 +27,14 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onInstallClick }) => {
                 </button>
             </div>
 
+            <div className="flex justify-center mt-[-24px] mb-12">
+                <img
+                    src="/icemelt_150w.png"
+                    alt="IceMelt"
+                    className="w-16 h-auto drop-shadow-[0_0_15px_rgba(37,99,235,0.4)] opacity-80"
+                />
+            </div>
+
             {/* Actual Footer Content - Subtle & Technical */}
             <div className="w-full border-t border-slate-900 pt-8 flex flex-col items-center gap-6">
 
