@@ -271,6 +271,12 @@ export const storageService = {
 
     onProgress(100);
 
+    // Export the raw key as a hex string for the recovery backup
+    const exportedRaw = await window.crypto.subtle.exportKey('raw', secretKey);
+    const recoveryKeyHex = Array.from(new Uint8Array(exportedRaw))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
     return {
       id: "SUCCESS",
       fileName: file.name,
@@ -278,8 +284,9 @@ export const storageService = {
       city: city,
       uploadDate: date,
       fileSize: file.size,
-      bucketUrl: `${bucketName}/${s3Path}`, // Supabase Storage Path
-      encryptedKeyPayload: dbKeyPayload, // Must match UploadRecord type
+      bucketUrl: `${bucketName}/${s3Path}`,
+      encryptedKeyPayload: dbKeyPayload,
+      recoveryKey: recoveryKeyHex, // This will be displayed in the UI modal
       status: 'completed',
       hash: 'N/A'
     };
