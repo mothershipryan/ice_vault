@@ -298,23 +298,29 @@ export const storageService = {
   },
 
   retrieveRecordKey: async (dbKeyPayload: string, passphraseOrKey: string): Promise<CryptoKey> => {
-    // Check if passphraseOrKey is actually a raw Recovery Key (64-char hex)
-    const isHexKey = /^[0-9a-f]{64}$/i.test(passphraseOrKey.trim());
+    // Check if passphraseOrKey is a raw Recovery Key (with or without 'ICE-' prefix)
+    const cleanKey = passphraseOrKey.replace(/^ICE-|[^A-F0-9]/gi, '');
+    const isHexKey = /^[0-9a-f]{64}$/i.test(cleanKey);
 
     if (isHexKey) {
       console.log('Using direct Recovery Key for retrieval');
-      return storageService.importKeyFromString(passphraseOrKey);
+      return storageService.importKeyFromString(cleanKey);
     }
 
     if (dbKeyPayload.startsWith('PWV1:')) {
-      const [, saltHex, wrappedKeyStr] = dbKeyPayload.split(':');
+      const parts = dbKeyPayload.split(':');
+      const saltHex = parts[1];
+      const wrappedKeyStr = parts.slice(2).join(':'); // Handle IV:Ciphertext structure
+
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
       const kek = await deriveKEK(passphraseOrKey, salt);
       return unwrapKey(wrappedKeyStr, kek);
     }
     else if (dbKeyPayload.startsWith('PWV2:')) {
-      // PWV2 shares same KEK derivation as V1 for the wrapping key
-      const [, saltHex, wrappedKeyStr] = dbKeyPayload.split(':');
+      const parts = dbKeyPayload.split(':');
+      const saltHex = parts[1];
+      const wrappedKeyStr = parts.slice(2).join(':'); // Handle IV:Ciphertext structure
+
       const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
       const kek = await deriveKEK(passphraseOrKey, salt);
       return unwrapKey(wrappedKeyStr, kek);
@@ -323,7 +329,8 @@ export const storageService = {
   },
 
   importKeyFromString: async (keyString: string): Promise<CryptoKey> => {
-    const cleanKey = keyString.replace(/^ICE-|[^A-F0-9]/g, '');
+    const cleanKey = keyString.replace(/^ICE-|[^A-F0-9]/gi, '');
+    if (cleanKey.length !== 64) throw new Error("Invalid Recovery Key Format. Must be 64 characters.");
     const keyBytes = new Uint8Array(cleanKey.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 
     return window.crypto.subtle.importKey(
@@ -433,26 +440,34 @@ export const storageService = {
 
           if (passphrase) {
             try {
-              // Attempt decryption of METADATA
-              const [ivHex, dataHex] = row.encrypted_metadata.split(':');
-              // But wait, we need the KEK first.
-              const [prefix, saltHex, wrappedKeyStr] = row.encrypted_aes_key.split(':');
-              if (prefix !== 'PWV2') throw new Error('Unknown format');
+              const parts = row.encrypted_aes_key.split(':');
+              const prefix = parts[0];
+              const saltHex = parts[1];
 
-              const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-              const kek = await deriveKEK(passphrase, salt);
+              if (prefix === 'PWV2') {
+                const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+                const kek = await deriveKEK(passphrase, salt);
 
-              // Decrypt Metadata
-              decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
+                // Decrypt Metadata
+                decryptedMeta = await decryptMetadata(row.encrypted_metadata, kek);
 
-              // Filter Check
-              if (query.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) isValid = false;
-              if (query.city && decryptedMeta.city.toLowerCase() !== query.city.toLowerCase()) isValid = false;
-              if (query.date && decryptedMeta.upload_date !== query.date) isValid = false;
-
+                // Filter Check - only hide if searching by location and it definitively doesn't match
+                if (query.state && decryptedMeta.state && decryptedMeta.state.toLowerCase() !== query.state.toLowerCase()) {
+                  isValid = false;
+                }
+                if (query.city && decryptedMeta.city && decryptedMeta.city.toLowerCase() !== query.city.toLowerCase()) {
+                  isValid = false;
+                }
+                if (query.date && decryptedMeta.upload_date && decryptedMeta.upload_date !== query.date) {
+                  isValid = false;
+                }
+              }
             } catch (e) {
-              // Decryption failed means wrong passphrase or corrupted
-              // We keep it as "Locked"
+              // If decryption fails, we show the record but with "Locked" placeholders
+              // unless the user is searching by a specific location, then we can't confirm it's a match.
+              if (query.state || query.city || query.date) {
+                isValid = false;
+              }
             }
           }
 
