@@ -225,7 +225,12 @@ export const storageService = {
 
     const bucketName = 'fuckicevault';
     const randomName = crypto.randomUUID();
-    const s3Path = `${user.id}/${randomName}.enc`; // Prefix with User ID for cleaner RLS policies
+
+    // Sanitize state and city for folder names (remove non-alphanumeric, lowercase)
+    const cleanState = state.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const cleanCity = city.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const s3Path = `${user.id}/${cleanState}/${cleanCity}/${randomName}.enc`;
+
     onProgress(75);
 
     // 1. Upload to Supabase Storage (Proxies to S3/Disk)
