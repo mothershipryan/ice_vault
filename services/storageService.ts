@@ -288,7 +288,8 @@ export const storageService = {
       encryptedKeyPayload: dbKeyPayload,
       recoveryKey: recoveryKeyHex,
       status: 'completed',
-      hash: 'N/A'
+      hash: 'N/A',
+      isLegacy: false
     };
   },
 
@@ -379,6 +380,27 @@ export const storageService = {
 
     if (!data) throw new Error("No data received from storage.");
     return data;
+  },
+
+  deleteRecord: async (id: string, s3Path: string, isLegacy: boolean): Promise<void> => {
+    const bucketName = isLegacy ? 'video_vault' : 'fuckicevault';
+    const tableName = isLegacy ? 'video_vault' : 'videos';
+
+    console.log(`[Vault] Auto-Destruct sequence initiated for ${id}...`);
+
+    // 1. Delete from Storage
+    const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
+    if (storageError) {
+      console.warn(`[Vault] Storage deletion error (non-fatal): ${storageError.message}`);
+    }
+
+    // 2. Delete from Database
+    const { error: dbError } = await supabase.from(tableName).delete().eq('id', id);
+    if (dbError) {
+      throw new Error(`Failed to delete database record: ${dbError.message}`);
+    }
+
+    console.log(`[Vault] Record ${id} purged successfully.`);
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
@@ -479,7 +501,8 @@ export const storageService = {
         s3Path: row.s3_path,
         encryptedKeyPayload: row.encrypted_aes_key,
         status: 'completed',
-        hash: 'N/A'
+        hash: 'N/A',
+        isLegacy: !!row.is_legacy
       } as UploadRecord;
     });
 

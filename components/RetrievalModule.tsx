@@ -157,7 +157,17 @@ const RetrievalModule: React.FC = () => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
-                    if (btn) btn.innerText = "Decrypted & Downloaded";
+                    if (btn) btn.innerText = "Burned & Purged";
+
+                    // 5. Auto-Destruct (Permanent Deletion)
+                    try {
+                      await storageService.deleteRecord(rec.id, rec.s3Path || "", !!rec.isLegacy);
+                      // Remove from UI immediately
+                      setResults(prev => prev.filter(r => r.id !== rec.id));
+                    } catch (delError) {
+                      console.error("[Vault] Deletion failed:", delError);
+                      // Non-blocking in UI, but logged
+                    }
                   } catch (err: any) {
                     console.error("Critical Retrieval Error:", err);
                     alert(err.message || "Decryption Failed. Check your Key.");
