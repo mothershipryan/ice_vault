@@ -60,6 +60,18 @@ const deriveSearchKey = async (passphrase: string, salt: Uint8Array): Promise<Cr
   );
 };
 
+// Helper: Derive a deterministic user ID from passphrase
+const deriveUserIdFromPassphrase = async (passphrase: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(passphrase.trim());
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Format as UUID for compatibility with Supabase user_id field (UUID v4 format)
+  return `${hashHex.slice(0, 8)}-${hashHex.slice(8, 12)}-${hashHex.slice(12, 16)}-${hashHex.slice(16, 20)}-${hashHex.slice(20, 32)}`;
+};
+
 // Helper: Calculate Blind Index (HMAC-SHA256)
 const calculateBlindIndex = async (term: string, key: CryptoKey): Promise<string> => {
   const encoder = new TextEncoder();
@@ -198,15 +210,9 @@ export const storageService = {
     passphrase: string,
     onProgress: (progress: number) => void
   ): Promise<UploadRecord> => {
-    let { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      const { data: authData } = await supabase.auth.signInWithPassword({
-        email: 'uploader@fuck-ice.com',
-        password: 'PUBLIC_UPLOADER_PASSWORD_123!'
-      });
-      user = authData.user;
-    }
-    if (!user) throw new Error('User not authenticated');
+    // Derive a deterministic user ID from the passphrase
+    const derivedUserId = await deriveUserIdFromPassphrase(passphrase);
+    console.log(`[Vault] Using passphrase-derived user ID: ${derivedUserId.slice(0, 8)}...`);
 
     onProgress(1);
     const secretKey = await generateAESKey();
@@ -233,7 +239,7 @@ export const storageService = {
     const randomName = crypto.randomUUID();
     const cleanState = state.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const cleanCity = city.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const s3Path = `${user.id}/${cleanState}/${cleanCity}/${randomName}.enc`;
+    const s3Path = `${derivedUserId}/${state.toLowerCase()}/${city.toLowerCase()}/${window.crypto.randomUUID()}.enc`;
 
     onProgress(75);
     const { error: uploadError } = await supabase.storage.from(bucketName).upload(s3Path, encryptedBlob);
@@ -241,7 +247,7 @@ export const storageService = {
 
     onProgress(95);
     const { error: dbError } = await supabase.from('videos').insert({
-      user_id: user.id,
+      user_id: derivedUserId,
       blind_index_state: blindIndexState,
       blind_index_city: blindIndexCity,
       blind_index_date: blindIndexDate,
@@ -415,17 +421,13 @@ export const storageService = {
     const cleanInput = trimmedPass.replace(/^ICE-|[^A-F0-9]/gi, '');
     const isHexKey = /^[0-9a-f]{64}$/i.test(cleanInput);
 
-    let { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      const { data: authData } = await supabase.auth.signInWithPassword({ email: 'uploader@fuck-ice.com', password: 'PUBLIC_UPLOADER_PASSWORD_123!' });
-      user = authData.user;
-    }
-    if (!user) return [];
+    // Derive a deterministic user ID from the passphrase
+    const derivedUserId = await deriveUserIdFromPassphrase(trimmedPass);
+    console.log(`[Vault] Searching for records... Passphrase-derived user ID: ${derivedUserId.slice(0, 8)}...`);
 
-    console.log(`[Vault] Searching for records... User: ${user.id}`);
     const [v2Resp, v1Resp] = await Promise.all([
-      supabase.from('videos').select('*').eq('user_id', user.id),
-      supabase.from('video_vault').select('*').eq('user_id', user.id)
+      supabase.from('videos').select('*').eq('user_id', derivedUserId),
+      supabase.from('video_vault').select('*').eq('user_id', derivedUserId)
     ]);
 
     const allRows = [
