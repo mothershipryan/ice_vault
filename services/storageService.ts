@@ -334,6 +334,35 @@ export const storageService = {
 
     console.log(`[Vault] Purge sequence initiated for ID: ${id} (isLegacy: ${isLegacy}) using ADMIN BYPASS.`);
     console.log(`[Vault] Target: Table=${tableName}, Bucket=${bucketName}, Path=${s3Path}`);
+    console.log(`[Vault] ID Type: ${typeof id}, ID Value: "${id}"`);
+
+    // 0. Pre-flight check: Verify record exists
+    try {
+      const { data: existingRecord, error: checkError } = await supabaseAdmin
+        .from(tableName)
+        .select('id, s3_path')
+        .eq('id', id)
+        .single();
+
+      if (checkError) {
+        console.error(`[Vault] Pre-flight check error:`, checkError);
+        if (checkError.code === 'PGRST116') {
+          throw new Error(`Record not found in database. The file may have already been deleted. (ID: ${id})`);
+        }
+        throw new Error(`Pre-flight check failed: ${checkError.message}`);
+      }
+
+      if (!existingRecord) {
+        console.warn(`[Vault] Record does not exist in ${tableName} table.`);
+        throw new Error(`Record not found in database (ID: ${id}). It may have been deleted already.`);
+      }
+
+      console.log(`[Vault] ✓ Pre-flight check passed. Record exists in database.`);
+      console.log(`[Vault] Record details:`, existingRecord);
+    } catch (preflightErr: any) {
+      console.error(`[Vault] Pre-flight verification failed:`, preflightErr);
+      throw preflightErr;
+    }
 
     // 1. Delete from Database using ADMIN CLIENT to bypass RLS
     try {
