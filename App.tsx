@@ -9,6 +9,7 @@ import AboutCard from './components/AboutCard.tsx';
 import RetrievalModule from './components/RetrievalModule.tsx';
 import InstallationGuide from './components/InstallationGuide.tsx';
 import PrivacyPolicy from './components/PrivacyPolicy.tsx';
+import Censorship from './components/Censorship.tsx';
 import Footer from './components/Footer.tsx';
 import { storageService } from './services/storageService.ts';
 import { BACKGROUND_URL } from './constants.ts';
@@ -359,6 +360,10 @@ const App: React.FC = () => {
           {viewMode === ViewMode.PRIVACY && (
             <PrivacyPolicy onBack={() => setViewMode(ViewMode.DEPOSIT)} />
           )}
+
+          {viewMode === ViewMode.CENSORSHIP && (
+            <Censorship onBack={() => setViewMode(ViewMode.DEPOSIT)} />
+          )}
         </div>
 
         {viewMode === ViewMode.DEPOSIT && (
@@ -370,6 +375,7 @@ const App: React.FC = () => {
 
         <Footer
           onPrivacyClick={() => setViewMode(ViewMode.PRIVACY)}
+          onCensorshipClick={() => setViewMode(ViewMode.CENSORSHIP)}
           onInstallClick={() => setViewMode(ViewMode.INSTALLATION)}
         />
       </main>

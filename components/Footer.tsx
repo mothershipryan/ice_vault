@@ -2,10 +2,11 @@ import React from 'react';
 
 interface FooterProps {
     onPrivacyClick: () => void;
+    onCensorshipClick: () => void;
     onInstallClick: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onInstallClick }) => {
+const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onInstallClick }) => {
     return (
         <footer className="w-full mt-6 pb-safe">
             {/* Install Action Area - Distinct from footer links */}
@@ -52,13 +53,19 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onInstallClick }) => {
                     >
                         Privacy
                     </button>
+                    <button
+                        onClick={onCensorshipClick}
+                        className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-600 hover:text-slate-300 transition-colors"
+                    >
+                        Censorship
+                    </button>
                     <a
                         href="https://rddqcxfalrlmlvirjlca.supabase.co/storage/v1/object/public/logos/media-kit.pdf"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-600 hover:text-slate-300 transition-colors"
                     >
-                        Media Kit
+                        Stickers
                     </a>
                 </div>
 
