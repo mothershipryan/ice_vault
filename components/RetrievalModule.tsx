@@ -173,8 +173,20 @@ const RetrievalModule: React.FC = () => {
                     setResults(prev => prev.filter(r => r.id !== rec.id));
                   } catch (err: any) {
                     console.error("[Vault] Critical Decrypt/Purge Error:", err);
-                    alert(`Action Failed: ${err.message}`);
-                    if (btn) btn.innerText = "Process Failed";
+
+                    // If the record wasn't found in the database, it may have already been deleted
+                    // Remove it from the UI gracefully instead of showing an error
+                    if (err.message && err.message.includes("Record not found in database")) {
+                      console.warn(`[Vault] Record ${rec.id} not found in database. Removing from UI (likely already deleted).`);
+                      setResults(prev => prev.filter(r => r.id !== rec.id));
+                      if (btn) btn.innerText = "Already Deleted";
+                      setTimeout(() => {
+                        if (btn) btn.innerText = "Retrieve & Burn";
+                      }, 2000);
+                    } else {
+                      alert(`Action Failed: ${err.message}`);
+                      if (btn) btn.innerText = "Process Failed";
+                    }
                   }
                 }}
                 id={`btn-${rec.id}`}
