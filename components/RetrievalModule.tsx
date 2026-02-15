@@ -20,6 +20,18 @@ const RetrievalModule: React.FC = () => {
       alert("Ghost Vault: You must enter a Passphrase or Backup Key to find your files.");
       return;
     }
+
+    // Require state and city to prevent cross-location access with same passphrase
+    if (!state && !stateName) {
+      alert("Security Notice: You must select a State to retrieve files.");
+      return;
+    }
+
+    if (!city || !city.trim()) {
+      alert("Security Notice: You must select a City to retrieve files.");
+      return;
+    }
+
     setLoading(true);
     setHasSearched(true);
     try {
