@@ -333,31 +333,50 @@ export const storageService = {
     const tableName = isLegacy ? 'video_vault' : 'videos';
 
     console.log(`[Vault] Purge sequence initiated for ID: ${id} (isLegacy: ${isLegacy}) using ADMIN BYPASS.`);
+    console.log(`[Vault] Target: Table=${tableName}, Bucket=${bucketName}, Path=${s3Path}`);
 
     // 1. Delete from Database using ADMIN CLIENT to bypass RLS
-    const { error: dbError, data: deletedRows } = await supabaseAdmin
-      .from(tableName)
-      .delete()
-      .eq('id', id)
-      .select();
+    try {
+      const { error: dbError, data: deletedRows } = await supabaseAdmin
+        .from(tableName)
+        .delete()
+        .eq('id', id)
+        .select();
 
-    if (dbError) {
-      console.error(`[Vault] Admin deletion FAILED:`, dbError);
-      throw new Error(`Auto-Destruct FAILED (DB Admin): ${dbError.message}`);
+      if (dbError) {
+        console.error(`[Vault] Database deletion FAILED:`, dbError);
+        throw new Error(`Auto-Destruct FAILED (DB Admin): ${dbError.message}`);
+      }
+
+      if (!deletedRows || deletedRows.length === 0) {
+        console.warn(`[Vault] No rows were deleted for ID ${id} even with Admin key.`);
+        console.warn(`[Vault] This may indicate the record doesn't exist or ID mismatch.`);
+        throw new Error(`Auto-Destruct FAILED: Record not found in database (ID: ${id})`);
+      }
+
+      console.log(`[Vault] ✓ Database row purged successfully. Deleted ${deletedRows.length} row(s).`);
+    } catch (dbErr: any) {
+      console.error(`[Vault] Database deletion error:`, dbErr);
+      throw dbErr; // Re-throw to prevent storage deletion if DB fails
     }
 
-    if (!deletedRows || deletedRows.length === 0) {
-      console.warn(`[Vault] No rows were deleted for ID ${id} even with Admin key.`);
-      throw new Error(`Auto-Destruct FAILED: Record not found in database. Check if ID matches exactly.`);
+    // 2. Delete from Storage (only if database deletion succeeded)
+    try {
+      const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
+
+      if (storageError) {
+        console.error(`[Vault] Storage deletion error:`, storageError);
+        console.warn(`[Vault] WARNING: Database record was deleted but storage file may still exist.`);
+        throw new Error(`Storage deletion failed: ${storageError.message}`);
+      }
+
+      console.log(`[Vault] ✓ Storage file purged successfully.`);
+    } catch (storageErr: any) {
+      console.error(`[Vault] Storage deletion error:`, storageErr);
+      throw new Error(`Storage deletion failed after DB deletion: ${storageErr.message}`);
     }
 
-    console.log(`[Vault] Database row purged successfully.`);
-
-    // 2. Delete from Storage
-    const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
-    if (storageError) console.warn(`[Vault] Storage deletion error: ${storageError.message}`);
-
-    console.log(`[Vault] Auto-Destruct complete.`);
+    console.log(`[Vault] ✓ Auto-Destruct complete. Both database and storage purged.`);
   },
 
   getRecords: async (query: { state?: string, city?: string, date?: string }, passphrase?: string): Promise<UploadRecord[]> => {
