@@ -258,9 +258,21 @@ const App: React.FC = () => {
 
                 <div className="bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 space-y-3">
                   <div className="flex justify-between items-center px-1">
-                    <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
-                      Personal Vault Passphrase
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
+                        Personal Vault Passphrase
+                      </label>
+                      <div className="group relative">
+                        <svg className="w-3.5 h-3.5 text-blue-400/60 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <div className="absolute left-0 top-6 w-72 p-3 bg-slate-800 border border-blue-500/30 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                          <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                            <span className="text-blue-400 font-bold">Your passphrase creates your personal vault.</span> All files uploaded with the same passphrase are grouped together. Use different passphrases to create separate, isolated vaults. Same passphrase works across all devices.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     <span className="text-[9px] text-blue-400/60 font-black uppercase tracking-widest bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-500/10">Zero Knowledge</span>
                   </div>
                   <input
