@@ -101,7 +101,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
 
   return (
     <div className="flex flex-col gap-2 relative" ref={containerRef}>
-      <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
+      <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
         Capture Timestamp
       </label>
 
@@ -109,10 +109,10 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
-          w-full h-[64px] bg-slate-900/50 border border-slate-700 text-white rounded-2xl px-5 
+          w-full h-[64px] bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 
           transition-all text-sm font-bold shadow-sm flex items-center justify-between cursor-pointer
-          hover:bg-slate-800/50 hover:border-slate-600
-          ${isOpen ? 'ring-4 ring-blue-500/10 border-blue-500' : ''}
+          hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-600
+          ${isOpen ? 'ring-4 ring-blue-600/10 dark:ring-blue-500/10 border-blue-600 dark:border-blue-500' : ''}
           ${disabled ? 'opacity-50 pointer-events-none' : ''}
         `}
       >
@@ -125,27 +125,27 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
       {/* Popup Calendar */}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-2xl p-4 shadow-2xl">
+          <div className="bg-white dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-2xl">
             {/* Header: Month/Year + Navigation */}
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
 
-              <span className="text-white text-sm font-bold tracking-wide uppercase">
-                {monthNames[currentMonth]} <span className="text-blue-400">{currentYear}</span>
+              <span className="text-slate-900 dark:text-white text-sm font-bold tracking-wide uppercase">
+                {monthNames[currentMonth]} <span className="text-blue-600 dark:text-blue-400">{currentYear}</span>
               </span>
 
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
@@ -176,12 +176,12 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
                     type="button"
                     onClick={() => handleDayClick(day)}
                     className={`
-                      h-8 rounded-lg text-xs font-bold transition-all flex items-center justify-center
-                      ${selected
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 scale-105'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white bg-slate-800/20'}
-                      ${today && !selected ? 'border border-blue-400/50 text-blue-300' : ''}
-                    `}
+                        h-8 rounded-lg text-xs font-bold transition-all flex items-center justify-center
+                        ${selected
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-400/50 dark:shadow-blue-900/50 scale-105'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-white bg-slate-50 dark:bg-slate-800/20'}
+                        ${today && !selected ? 'border border-blue-400 dark:border-blue-400/50 text-blue-600 dark:text-blue-300' : ''}
+                      `}
                   >
                     {day}
                   </button>

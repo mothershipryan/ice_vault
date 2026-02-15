@@ -11,6 +11,7 @@ import InstallationGuide from './components/InstallationGuide.tsx';
 import PrivacyPolicy from './components/PrivacyPolicy.tsx';
 import Censorship from './components/Censorship.tsx';
 import Footer from './components/Footer.tsx';
+import ThemeToggle from './components/ThemeToggle.tsx';
 import { storageService } from './services/storageService.ts';
 import { BACKGROUND_URL } from './constants.ts';
 import { AppStatus, ViewMode } from './types.ts';
@@ -143,31 +144,34 @@ const App: React.FC = () => {
   const isInstalling = viewMode === ViewMode.INSTALLATION;
 
   return (
-    <div className="min-h-[100dvh] relative flex flex-col items-center bg-slate-950 overflow-y-auto overflow-x-hidden safe-pt safe-pb">
+    <div className="min-h-[100dvh] relative flex flex-col items-center bg-slate-50 dark:bg-slate-950 transition-colors duration-500 overflow-y-auto overflow-x-hidden safe-pt safe-pb">
       <div
         className="fixed inset-0 z-0 bg-cover bg-center transition-opacity duration-1000"
         style={{
           backgroundImage: `url(${BACKGROUND_URL})`,
-          opacity: 0.4
+          opacity: 0.2
         }}
       />
-      <div className="fixed inset-0 z-1 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-blue-900/30" />
+      <div className="fixed inset-0 z-1 bg-gradient-to-b from-white/80 via-slate-50/60 to-blue-50/30 dark:from-slate-950/80 dark:via-slate-900/60 dark:to-blue-900/30 transition-colors duration-500" />
 
       <main className="relative z-10 w-full max-w-lg px-4 py-8 md:py-16 flex flex-col min-h-full">
+        <div className="absolute top-4 right-4 md:static md:flex md:justify-end md:mb-6">
+          <ThemeToggle />
+        </div>
 
         {/* Header */}
         {!isInstalling && (
           <div className="text-center mb-10 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              <span className="text-blue-300 text-[10px] font-bold tracking-widest uppercase">Encryption Active</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 dark:bg-blue-500/10 dark:border-blue-400/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+              <span className="text-blue-700 dark:text-blue-300 text-[10px] font-bold tracking-widest uppercase">Encryption Active</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.9]">
+            <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-[0.9]">
               FUCK I.C.E.<br />
-              <span className="text-blue-400">Vault</span>
+              <span className="text-blue-600 dark:text-blue-400">Vault</span>
             </h1>
             <div className="space-y-4">
-              <p className="text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
+              <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
                 SECURE STATE-INDEXED COLD VIDEO STORAGE
               </p>
             </div>
@@ -176,24 +180,24 @@ const App: React.FC = () => {
 
         {/* View Switcher */}
         {!isInstalling && (
-          <div className="flex p-1 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 mb-6">
+          <div className="flex p-1 bg-white/60 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/5 mb-6">
             <button
               onClick={() => setViewMode(ViewMode.DEPOSIT)}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === ViewMode.DEPOSIT ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === ViewMode.DEPOSIT ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
               Vault Deposit
             </button>
             <button
               onClick={() => setViewMode(ViewMode.RETRIEVAL)}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === ViewMode.RETRIEVAL ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === ViewMode.RETRIEVAL ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
               Retrieval
             </button>
           </div>
         )}
 
-        {/* Dark Glass Card */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl p-6 md:p-10 flex-1">
+        {/* glass Card */}
+        <div className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-6 md:p-10 flex-1 transition-colors duration-500">
 
           {viewMode === ViewMode.DEPOSIT && (
             <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -204,8 +208,8 @@ const App: React.FC = () => {
                   </div>
 
                   {recoveryKey && (
-                    <div className="p-5 bg-slate-950/80 border border-blue-500/30 rounded-2xl space-y-3">
-                      <div className="flex items-center gap-2 text-blue-400 justify-center">
+                    <div className="p-5 bg-slate-100/80 dark:bg-slate-950/80 border border-blue-500/30 dark:border-blue-500/30 rounded-2xl space-y-3 transition-colors">
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 justify-center">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
@@ -213,7 +217,7 @@ const App: React.FC = () => {
                       </div>
                       <div
                         onClick={handleCopyKey}
-                        className="group relative bg-slate-900 rounded-lg p-3 border border-slate-700 font-mono text-center text-white font-bold tracking-wider cursor-pointer hover:border-blue-500/50 hover:bg-slate-800 transition-all active:scale-[0.98] break-all text-[11px] leading-relaxed select-all"
+                        className="group relative bg-slate-200 dark:bg-slate-900 rounded-lg p-3 border border-slate-300 dark:border-slate-700 font-mono text-center text-slate-800 dark:text-white font-bold tracking-wider cursor-pointer hover:border-blue-500 dark:hover:border-blue-500/50 hover:bg-slate-300 dark:hover:bg-slate-800 transition-all active:scale-[0.98] break-all text-[11px] leading-relaxed select-all"
                       >
                         {recoveryKey}
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -239,7 +243,7 @@ const App: React.FC = () => {
                           {copied ? 'Copied to Clipboard' : 'Backup Key: Tap to Copy'}
                         </button>
                       </div>
-                      <p className="text-center text-[10px] text-red-500/80 font-bold uppercase tracking-wide opacity-80 pt-2">
+                      <p className="text-center text-[10px] text-red-600 dark:text-red-500/80 font-bold uppercase tracking-wide opacity-80 pt-2">
                         ⚠️ Use your passphrase for retrieval.<br />This key is for emergency use ONLY.
                       </p>
                     </div>
@@ -248,7 +252,7 @@ const App: React.FC = () => {
                   <div className="text-center">
                     <button
                       onClick={reset}
-                      className="mt-1 text-xs text-green-300/80 font-bold underline underline-offset-4"
+                      className="mt-1 text-xs text-green-600 dark:text-green-300/80 font-bold underline underline-offset-4"
                     >
                       Upload another asset
                     </button>
@@ -287,12 +291,12 @@ const App: React.FC = () => {
                   disabled={status === AppStatus.UPLOADING}
                 />
 
-                <div className="bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 space-y-3">
+                <div className="bg-slate-100/50 dark:bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 dark:border-blue-500/20 space-y-3 transition-colors">
                   <div className="flex justify-between items-center px-1">
-                    <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
+                    <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
                       Personal Vault Passphrase
                     </label>
-                    <span className="text-[9px] text-blue-400/60 font-black uppercase tracking-widest bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-500/10">Zero Knowledge</span>
+                    <span className="text-[9px] text-blue-600 dark:text-blue-400/60 font-black uppercase tracking-widest bg-blue-600/5 dark:bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-600/10 dark:border-blue-500/10">Zero Knowledge</span>
                   </div>
 
                   <input
@@ -301,14 +305,14 @@ const App: React.FC = () => {
                     onChange={(e) => setPassphrase(e.target.value)}
                     placeholder="CREATE A SECURE PASSPHRASE"
                     disabled={status === AppStatus.UPLOADING}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
                   />
 
                   {/* Passphrase strength indicator */}
                   {passphrase && passphraseStrength && (
                     <div className="space-y-1 px-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
                             className={`h-full transition-all duration-300 ${passphraseStrength.color}`}
                             style={{ width: `${(passphraseStrength.score / 5) * 100}%` }}
@@ -328,25 +332,25 @@ const App: React.FC = () => {
                   )}
 
                   {/* Info card */}
-                  <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-3 space-y-1.5">
-                    <p className="text-[10px] text-blue-300 font-bold uppercase tracking-wide">How it works:</p>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Files are grouped by <span className="text-blue-300 font-semibold">passphrase + location</span>. You must use the same passphrase, state, city, and date to retrieve your files. Different values = isolated vaults.
+                  <div className="bg-blue-600/5 dark:bg-blue-500/5 border border-blue-600/10 dark:border-blue-500/10 rounded-lg p-3 space-y-1.5">
+                    <p className="text-[10px] text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wide">How it works:</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Files are grouped by <span className="text-blue-700 dark:text-blue-300 font-semibold">passphrase + location</span>. You must use the same passphrase, state, city, and date to retrieve your files. Different values = isolated vaults.
                     </p>
                   </div>
 
-                  <p className="text-xs text-slate-500 font-medium px-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 font-medium px-1 leading-relaxed">
                     This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
+                  <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
                     Data Source
                   </label>
                   <div
                     className={`relative h-48 border-2 border-dashed rounded-[1.75rem] transition-all flex flex-col items-center justify-center p-6 text-center
-                      ${file ? 'border-blue-400 bg-blue-500/10' : 'border-slate-700 bg-slate-900/50 hover:bg-slate-800/80 active:bg-slate-800'}
+                      ${file ? 'border-blue-600 dark:border-blue-400 bg-blue-600/5 dark:bg-blue-500/10' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 active:bg-slate-200 dark:active:bg-slate-800'}
                       ${status === AppStatus.UPLOADING ? 'opacity-50 pointer-events-none' : ''}
                     `}
                   >
@@ -358,25 +362,25 @@ const App: React.FC = () => {
                     />
                     {!file ? (
                       <div className="space-y-3">
-                        <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto text-blue-400 shadow-lg">
+                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400 shadow-sm dark:shadow-lg border border-slate-100 dark:border-slate-700">
                           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
                         <div>
-                          <p className="text-slate-200 text-sm font-bold">Select Video</p>
-                          <p className="text-slate-500 text-[10px] mt-1 font-medium tracking-widest uppercase">Tap to scan storage</p>
+                          <p className="text-slate-800 dark:text-slate-200 text-sm font-bold">Select Video</p>
+                          <p className="text-slate-500 dark:text-slate-500 text-[10px] mt-1 font-medium tracking-widest uppercase">Tap to scan storage</p>
                         </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-3 border border-blue-400/30">
-                          <svg className="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <div className="w-16 h-16 bg-blue-600/10 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center mb-3 border border-blue-600/20 dark:border-blue-400/30">
+                          <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                           </svg>
                         </div>
-                        <p className="text-blue-400 text-xs font-black uppercase tracking-widest mb-1">Asset Loaded</p>
-                        <p className="text-slate-400 text-[11px] font-medium truncate max-w-[200px]">
+                        <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">Asset Loaded</p>
+                        <p className="text-slate-600 dark:text-slate-400 text-[11px] font-medium truncate max-w-[200px]">
                           {file.name}
                         </p>
                       </div>
@@ -389,12 +393,12 @@ const App: React.FC = () => {
                 {status === AppStatus.UPLOADING ? (
                   <div className="space-y-4 py-2">
                     <div className="flex justify-between items-center px-1">
-                      <span className="text-blue-300 text-[10px] font-black uppercase tracking-widest">Uploading...</span>
-                      <span className="text-blue-400 text-xs font-black">{progress}%</span>
+                      <span className="text-blue-700 dark:text-blue-300 text-[10px] font-black uppercase tracking-widest">Uploading...</span>
+                      <span className="text-blue-600 dark:text-blue-400 text-xs font-black">{progress}%</span>
                     </div>
-                    <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-[1px]">
+                    <div className="h-3 w-full bg-white dark:bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-100 dark:border-slate-700">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-blue-700 to-blue-500 dark:from-blue-600 dark:to-blue-400 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -403,7 +407,7 @@ const App: React.FC = () => {
                   <button
                     onClick={handleUpload}
                     disabled={!file || !selectedState}
-                    className="group w-full h-[64px] bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-black rounded-[1.5rem] shadow-[0_15px_30px_rgba(37,99,235,0.2)] transition-all disabled:opacity-30 disabled:grayscale disabled:scale-100 uppercase tracking-[0.25em] text-xs flex items-center justify-center gap-3 border border-blue-400/20"
+                    className="group w-full h-[64px] bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 active:scale-[0.98] text-white font-black rounded-[1.5rem] shadow-[0_15px_30px_rgba(37,99,235,0.2)] transition-all disabled:opacity-30 disabled:grayscale disabled:scale-100 uppercase tracking-[0.25em] text-xs flex items-center justify-center gap-3 border border-blue-400/20 shadow-blue-500/20"
                   >
                     <span>Upload to Vault</span>
                     <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -444,7 +448,7 @@ const App: React.FC = () => {
         />
       </main>
 
-      <div className="fixed top-0 left-0 w-full h-1/2 bg-blue-500/5 blur-[120px] pointer-events-none -z-10" />
+      <div className="fixed top-0 left-0 w-full h-1/2 bg-blue-600/5 dark:bg-blue-500/5 blur-[120px] pointer-events-none -z-10" />
     </div>
   );
 };

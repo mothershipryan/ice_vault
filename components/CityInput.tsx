@@ -82,7 +82,7 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
   return (
     <div className="flex flex-col gap-2" ref={wrapperRef}>
       <div className="flex justify-between items-center px-1">
-        <label className="text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase">
+        <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase">
           City / Municipality
         </label>
       </div>
@@ -93,7 +93,7 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled || !state}
           placeholder={state ? "ENTER LOCATION" : "SELECT STATE FIRST"}
-          className="w-full h-[64px] bg-slate-900/50 border border-slate-700 text-white rounded-2xl px-5 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all disabled:opacity-50 text-sm font-bold shadow-sm placeholder:text-slate-600 placeholder:tracking-widest"
+          className="w-full h-[64px] bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 focus:outline-none focus:ring-4 focus:ring-blue-600/10 dark:focus:ring-blue-500/10 focus:border-blue-600 dark:focus:border-blue-500 transition-all disabled:opacity-50 text-sm font-bold shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 placeholder:tracking-widest"
           autoComplete="off"
         />
         {!value && (
@@ -106,19 +106,19 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
 
         {/* Autocomplete Dropdown */}
         {showSuggestions && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-xl z-50">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-xl z-50">
             {suggestions.length > 0 ? (
               suggestions.map((city, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSelect(city)}
-                  className="w-full text-left px-5 py-3 text-sm font-bold text-slate-300 hover:bg-blue-600 hover:text-white transition-colors uppercase"
+                  className="w-full text-left px-5 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition-colors uppercase"
                 >
                   {city}
                 </button>
               ))
             ) : (
-              <div className="px-5 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-900/80 italic">
+              <div className="px-5 py-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50/80 dark:bg-slate-900/80 italic">
                 No matching cities found in {stateName || state}
               </div>
             )}
