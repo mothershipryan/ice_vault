@@ -4,6 +4,7 @@ import CityInput from './CityInput.tsx';
 import DatePicker from './DatePicker.tsx';
 import { storageService } from '../services/storageService.ts';
 import { UploadRecord } from '../types.ts';
+import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '../utils/rateLimit.ts';
 
 const RetrievalModule: React.FC = () => {
   const [state, setState] = useState('');
@@ -32,14 +33,34 @@ const RetrievalModule: React.FC = () => {
       return;
     }
 
+    // Require date for complete isolation
+    if (!date || !date.trim()) {
+      alert("Security Notice: You must select a Date to retrieve files.");
+      return;
+    }
+
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit();
+    if (!rateLimitCheck.allowed) {
+      alert(rateLimitCheck.message);
+      return;
+    }
+
     setLoading(true);
     setHasSearched(true);
     try {
       console.log(`[Vault] Searching archives with key: ${vaultKey.trim().slice(0, 4)}***`);
       const data = await storageService.getRecords({ state: stateName || state, city, date }, vaultKey.trim());
       setResults(data);
+
+      // Reset rate limit on successful retrieval
+      if (data.length > 0) {
+        resetRateLimit();
+      }
     } catch (e) {
       console.error(e);
+      // Record failed attempt for rate limiting
+      recordFailedAttempt();
       alert("Search Failed. Check Browser Console for details.");
     } finally {
       setLoading(false);

@@ -14,6 +14,7 @@ import Footer from './components/Footer.tsx';
 import { storageService } from './services/storageService.ts';
 import { BACKGROUND_URL } from './constants.ts';
 import { AppStatus, ViewMode } from './types.ts';
+import { validatePassphraseStrength, PassphraseStrength } from './utils/passphraseValidation.ts';
 
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DEPOSIT);
@@ -34,6 +35,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState<string>(''); // NEW
+  const [passphraseStrength, setPassphraseStrength] = useState<PassphraseStrength | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -48,11 +50,21 @@ const App: React.FC = () => {
       const { data, error } = await supabase.auth.getSession();
       if (!data.session) {
         const { error: signInError } = await supabase.auth.signInAnonymously();
-        if (signInError) console.error('Auth error:', signInError);
+        if (signInError) console.error('Anonymous sign-in failed:', signInError);
       }
     };
     initAuth();
   }, []);
+
+  // Validate passphrase strength on change
+  useEffect(() => {
+    if (passphrase) {
+      const strength = validatePassphraseStrength(passphrase);
+      setPassphraseStrength(strength);
+    } else {
+      setPassphraseStrength(null);
+    }
+  }, [passphrase]);
 
   const handleCopyKey = () => {
     if (recoveryKey) {
@@ -75,20 +87,39 @@ const App: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !selectedState || !selectedCity || !selectedDate || !passphrase) {
-      setError('Please fill in all fields (including passphrase).');
+    if (!file) {
+      setError('Please select a file to upload.');
       return;
     }
 
+    if (!selectedState || !selectedCity || !selectedDate) {
+      setError('Please fill in all location and date fields.');
+      return;
+    }
+
+    if (!passphrase || !passphrase.trim()) {
+      setError('Please enter a passphrase.');
+      return;
+    }
+
+    // Check passphrase strength
+    const strength = validatePassphraseStrength(passphrase);
+    if (!strength.valid) {
+      setError(`Weak passphrase. ${strength.message}`);
+      return;
+    }
+
+    setStatus(AppStatus.UPLOADING);
+    setError(null);
+    setProgress(0);
+
     try {
-      setStatus(AppStatus.UPLOADING);
-      setError(null);
       const result = await storageService.uploadVideo(
         file,
         selectedStateName || selectedState,
         selectedCity,
         selectedDate,
-        passphrase, // ADDED
+        passphrase.trim(),
         (p) => setProgress(p)
       );
       setRecoveryKey(result.recoveryKey || null);
@@ -258,23 +289,12 @@ const App: React.FC = () => {
 
                 <div className="bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 space-y-3">
                   <div className="flex justify-between items-center px-1">
-                    <div className="flex items-center gap-2">
-                      <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
-                        Personal Vault Passphrase
-                      </label>
-                      <div className="group relative">
-                        <svg className="w-3.5 h-3.5 text-blue-400/60 cursor-help" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <div className="absolute right-0 top-6 w-64 sm:w-72 p-3 bg-slate-800 border border-blue-500/30 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                          <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                            <span className="text-blue-400 font-bold">Your passphrase creates your personal vault.</span> Files are grouped by passphrase + location (state/city). You must select the same state and city when retrieving to access your files. Different passphrases or locations = isolated vaults.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <label className="text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
+                      Personal Vault Passphrase
+                    </label>
                     <span className="text-[9px] text-blue-400/60 font-black uppercase tracking-widest bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-500/10">Zero Knowledge</span>
                   </div>
+
                   <input
                     type="password"
                     value={passphrase}
@@ -283,6 +303,38 @@ const App: React.FC = () => {
                     disabled={status === AppStatus.UPLOADING}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
                   />
+
+                  {/* Passphrase strength indicator */}
+                  {passphrase && passphraseStrength && (
+                    <div className="space-y-1 px-1">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-300 ${passphraseStrength.color}`}
+                            style={{ width: `${(passphraseStrength.score / 5) * 100}%` }}
+                          />
+                        </div>
+                        <span className={`text-[9px] font-bold uppercase tracking-wide ${passphraseStrength.valid ? 'text-green-400' : 'text-orange-400'
+                          }`}>
+                          {passphraseStrength.label}
+                        </span>
+                      </div>
+                      {!passphraseStrength.valid && (
+                        <p className="text-[10px] text-orange-400 font-medium">
+                          {passphraseStrength.message}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Info card */}
+                  <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-3 space-y-1.5">
+                    <p className="text-[10px] text-blue-300 font-bold uppercase tracking-wide">How it works:</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Files are grouped by <span className="text-blue-300 font-semibold">passphrase + location</span>. You must use the same passphrase, state, city, and date to retrieve your files. Different values = isolated vaults.
+                    </p>
+                  </div>
+
                   <p className="text-xs text-slate-500 font-medium px-1 leading-relaxed">
                     This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.
                   </p>
