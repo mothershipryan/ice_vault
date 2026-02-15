@@ -15,6 +15,7 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [justSelected, setJustSelected] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Close suggestions on click outside
@@ -31,6 +32,12 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
   useEffect(() => {
     const fetchCities = async () => {
       try {
+        // Skip if user just selected a city
+        if (justSelected) {
+          setJustSelected(false);
+          return;
+        }
+
         if (!state || !value || value.length < 2) {
           setSuggestions([]);
           setErrorStatus(null);
@@ -64,9 +71,10 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
 
     const timeoutId = setTimeout(fetchCities, 400);
     return () => clearTimeout(timeoutId);
-  }, [value, state, stateName]);
+  }, [value, state, stateName, justSelected]);
 
   const handleSelect = (city: string) => {
+    setJustSelected(true);
     onChange(city);
     setShowSuggestions(false);
   };
