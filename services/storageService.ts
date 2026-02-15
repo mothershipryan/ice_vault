@@ -332,13 +332,13 @@ export const storageService = {
     const bucketName = isLegacy ? 'video_vault' : 'fuckicevault';
     const tableName = isLegacy ? 'video_vault' : 'videos';
 
-    console.log(`[Vault] Purge sequence initiated for ID: ${id} (isLegacy: ${isLegacy}) using ADMIN BYPASS.`);
+    console.log(`[Vault] Purge sequence initiated for ID: ${id} (isLegacy: ${isLegacy})`);
     console.log(`[Vault] Target: Table=${tableName}, Bucket=${bucketName}, Path=${s3Path}`);
     console.log(`[Vault] ID Type: ${typeof id}, ID Value: "${id}"`);
 
     // 0. Pre-flight check: Verify record exists
     try {
-      const { data: existingRecord, error: checkError } = await supabaseAdmin
+      const { data: existingRecord, error: checkError } = await supabase
         .from(tableName)
         .select('id, s3_path')
         .eq('id', id)
@@ -366,7 +366,7 @@ export const storageService = {
 
     // 1. Delete from Database using ADMIN CLIENT to bypass RLS
     try {
-      const { error: dbError, data: deletedRows } = await supabaseAdmin
+      const { error: dbError, data: deletedRows } = await supabase
         .from(tableName)
         .delete()
         .eq('id', id)
@@ -374,12 +374,12 @@ export const storageService = {
 
       if (dbError) {
         console.error(`[Vault] Database deletion FAILED:`, dbError);
-        throw new Error(`Auto-Destruct FAILED (DB Admin): ${dbError.message}`);
+        throw new Error(`Auto-Destruct FAILED (DB): ${dbError.message}`);
       }
 
       if (!deletedRows || deletedRows.length === 0) {
-        console.warn(`[Vault] No rows were deleted for ID ${id} even with Admin key.`);
-        console.warn(`[Vault] This may indicate the record doesn't exist or ID mismatch.`);
+        console.warn(`[Vault] No rows were deleted for ID ${id}.`);
+        console.warn(`[Vault] This may indicate the record doesn't exist, ID mismatch, or RLS policy blocking deletion.`);
         throw new Error(`Auto-Destruct FAILED: Record not found in database (ID: ${id})`);
       }
 
