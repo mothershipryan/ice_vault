@@ -74,6 +74,34 @@ const Censorship: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                 </section>
 
+                <section className="space-y-4 group">
+                    <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+                        <img
+                            src="https://www.eff.org/files/banner_library/effector_banner_5.jpeg"
+                            alt="EFF Effector"
+                            className="w-full h-full object-cover opacity-60 group-hover:scale-105 group-hover:opacity-80 transition-all duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
+                    </div>
+                    <div className="space-y-3">
+                        <h3 className="text-blue-400 font-bold tracking-widest uppercase text-sm">03. Homeland Security Wants Names: Effector 38.3</h3>
+                        <p>
+                            The DHS is attempting to unmask anonymous critics on social media, prompting legal challenges and privacy alarms.
+                        </p>
+                        <a
+                            href="https://www.eff.org/deeplinks/2026/02/homeland-security-wants-names-effector-383"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-bold text-xs uppercase tracking-widest transition-colors"
+                        >
+                            Read EFF Article
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    </div>
+                </section>
+
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mt-8">
                     <h4 className="text-red-400 font-bold uppercase text-xs tracking-widest mb-2">Notice</h4>
                     <p className="text-xs text-red-200/60 leading-relaxed">
