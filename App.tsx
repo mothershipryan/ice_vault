@@ -268,7 +268,7 @@ const App: React.FC = () => {
                         </svg>
                         <div className="absolute right-0 top-6 w-64 sm:w-72 p-3 bg-slate-800 border border-blue-500/30 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                           <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                            <span className="text-blue-400 font-bold">Your passphrase creates your personal vault.</span> All files uploaded with the same passphrase are grouped together. Use different passphrases to create separate, isolated vaults. Same passphrase works across all devices.
+                            <span className="text-blue-400 font-bold">Your passphrase creates your personal vault.</span> Files are grouped by passphrase + location (state/city). You must select the same state and city when retrieving to access your files. Different passphrases or locations = isolated vaults.
                           </p>
                         </div>
                       </div>
