@@ -11,7 +11,6 @@ import InstallationGuide from './components/InstallationGuide.tsx';
 import PrivacyPolicy from './components/PrivacyPolicy.tsx';
 import Censorship from './components/Censorship.tsx';
 import Footer from './components/Footer.tsx';
-import ThemeToggle from './components/ThemeToggle.tsx';
 import { storageService } from './services/storageService.ts';
 import { BACKGROUND_URL } from './constants.ts';
 import { AppStatus, ViewMode } from './types.ts';
@@ -155,10 +154,6 @@ const App: React.FC = () => {
       <div className="fixed inset-0 z-1 bg-gradient-to-b from-white/80 via-slate-50/60 to-blue-50/30 dark:from-slate-950/80 dark:via-slate-900/60 dark:to-blue-900/30 transition-colors duration-500" />
 
       <main className="relative z-10 w-full max-w-lg px-4 py-8 md:py-16 flex flex-col min-h-full">
-        <div className="absolute top-4 right-4 md:static md:flex md:justify-end md:mb-6">
-          <ThemeToggle />
-        </div>
-
         {/* Header */}
         {!isInstalling && (
           <div className="text-center mb-10 space-y-4">
@@ -449,7 +444,7 @@ const App: React.FC = () => {
       </main>
 
       <div className="fixed top-0 left-0 w-full h-1/2 bg-blue-600/5 dark:bg-blue-500/5 blur-[120px] pointer-events-none -z-10" />
-    </div>
+    </div >
   );
 };
 

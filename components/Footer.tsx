@@ -1,4 +1,5 @@
 import React from 'react';
+import ThemeToggle from './ThemeToggle.tsx';
 
 interface FooterProps {
     onPrivacyClick: () => void;
@@ -67,6 +68,10 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                     >
                         Stickers
                     </a>
+                </div>
+
+                <div className="flex justify-center">
+                    <ThemeToggle />
                 </div>
 
                 {/* System Tag */}
