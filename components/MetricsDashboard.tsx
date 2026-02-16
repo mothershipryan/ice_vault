@@ -1,0 +1,131 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabaseClient.ts';
+
+interface MetricsData {
+    totalRecords: number;
+    totalStorageBytes: number;
+    recentLogs: any[];
+}
+
+const MetricsDashboard: React.FC = () => {
+    const [metrics, setMetrics] = useState<MetricsData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchMetrics = async () => {
+            try {
+                setLoading(true);
+
+                // 1. Total Records and Storage from 'videos' table
+                const { data: videos, error: vErr } = await supabase
+                    .from('videos')
+                    .select('file_size');
+
+                if (vErr) throw vErr;
+
+                const totalRecords = videos?.length || 0;
+                const totalStorageBytes = videos?.reduce((sum, v) => sum + (v.file_size || 0), 0) || 0;
+
+                // 2. Recent activity logs
+                const { data: logs, error: lErr } = await supabase
+                    .from('activity_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (lErr) throw lErr;
+
+                setMetrics({
+                    totalRecords,
+                    totalStorageBytes,
+                    recentLogs: logs || [],
+                });
+            } catch (err: any) {
+                console.error('Metrics Fetch Error:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMetrics();
+    }, []);
+
+    const formatSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    if (loading) return (
+        <div className="flex justify-center items-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        </div>
+    );
+
+    if (error) return (
+        <div className="p-6 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400">
+            Error loading metrics: {error}
+        </div>
+    );
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <header className="border-b border-red-500/30 pb-4">
+                <h2 className="text-2xl font-bold text-red-500 tracking-tight flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                    Vault Metrics
+                </h2>
+                <p className="text-zinc-500 text-sm mt-1 uppercase tracking-widest font-mono">Internal Access Only</p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 p-6 rounded-xl backdrop-blur-sm transition-colors duration-300">
+                    <p className="text-zinc-500 text-xs uppercase font-mono mb-2">Total Records</p>
+                    <p className="text-3xl font-bold text-zinc-100">{metrics?.totalRecords.toLocaleString()}</p>
+                </div>
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 p-6 rounded-xl backdrop-blur-sm transition-colors duration-300">
+                    <p className="text-zinc-500 text-xs uppercase font-mono mb-2">Encrypted Storage</p>
+                    <p className="text-3xl font-bold text-zinc-100">{formatSize(metrics?.totalStorageBytes || 0)}</p>
+                </div>
+            </div>
+
+            <section>
+                <h3 className="text-lg font-bold text-zinc-300 mb-4 flex items-center gap-2">
+                    Recent Activity Logs
+                </h3>
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 rounded-xl overflow-hidden backdrop-blur-sm transition-colors duration-300">
+                    {metrics?.recentLogs.length === 0 ? (
+                        <p className="p-8 text-center text-zinc-600 italic">No recent logs found.</p>
+                    ) : (
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-zinc-800/50 dark:bg-zinc-900/50 text-zinc-500 font-mono text-xs uppercase">
+                                <tr>
+                                    <th className="px-6 py-3 font-medium">Action</th>
+                                    <th className="px-6 py-3 font-medium">Description</th>
+                                    <th className="px-6 py-3 font-medium">Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-500/10">
+                                {metrics?.recentLogs.map((log) => (
+                                    <tr key={log.id} className="hover:bg-red-500/5 transition-colors group">
+                                        <td className="px-6 py-4 font-mono text-zinc-400 group-hover:text-red-400">{log.action_type}</td>
+                                        <td className="px-6 py-4 text-zinc-300">{log.description}</td>
+                                        <td className="px-6 py-4 text-zinc-500 font-mono text-xs">
+                                            {new Date(log.created_at).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </section>
+        </div>
+    );
+};
+
+export default MetricsDashboard;

@@ -5,9 +5,23 @@ interface FooterProps {
     onPrivacyClick: () => void;
     onCensorshipClick: () => void;
     onInstallClick: () => void;
+    onAdminUnlock: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onInstallClick }) => {
+const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onInstallClick, onAdminUnlock }) => {
+    const [clickCount, setClickCount] = React.useState(0);
+
+    const handleVersionClick = () => {
+        const newCount = clickCount + 1;
+        if (newCount >= 3) {
+            setClickCount(0);
+            onAdminUnlock();
+        } else {
+            setClickCount(newCount);
+            // Reset count if no follow-up click within 2 seconds
+            setTimeout(() => setClickCount(0), 2000);
+        }
+    };
     return (
         <footer className="w-full mt-6 pb-safe">
             {/* Install Action Area - Distinct from footer links */}
@@ -74,10 +88,12 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                     <ThemeToggle />
                 </div>
 
-                {/* System Tag */}
                 <div className="flex flex-col items-center gap-2 opacity-30">
                     <div className="w-1 h-1 rounded-full bg-slate-500 animate-pulse"></div>
-                    <p className="text-slate-500 text-[8px] uppercase tracking-[0.4em] font-black">
+                    <p
+                        className="text-slate-500 text-[8px] uppercase tracking-[0.4em] font-black cursor-default select-none"
+                        onClick={handleVersionClick}
+                    >
                         System Protocol 1.0.0
                     </p>
                 </div>

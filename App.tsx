@@ -11,6 +11,7 @@ import InstallationGuide from './components/InstallationGuide.tsx';
 import PrivacyPolicy from './components/PrivacyPolicy.tsx';
 import Censorship from './components/Censorship.tsx';
 import Footer from './components/Footer.tsx';
+import MetricsDashboard from './components/MetricsDashboard.tsx';
 import { storageService } from './services/storageService.ts';
 import { BACKGROUND_URL } from './constants.ts';
 import { AppStatus, ViewMode } from './types.ts';
@@ -18,6 +19,7 @@ import { validatePassphraseStrength, PassphraseStrength } from './utils/passphra
 
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DEPOSIT);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedStateName, setSelectedStateName] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
@@ -138,6 +140,19 @@ const App: React.FC = () => {
     setError(null);
     setRecoveryKey(null);
     setCopied(false);
+  };
+
+  const handleAdminUnlock = () => {
+    const pin = prompt('Enter Admin PIN:');
+    // Using a default fallback for local dev if env not set
+    const correctPin = import.meta.env.VITE_ADMIN_PIN || '1234';
+
+    if (pin === correctPin) {
+      setIsAdmin(true);
+      setViewMode(ViewMode.METRICS);
+    } else if (pin !== null) {
+      alert('Access Denied');
+    }
   };
 
   const isInstalling = viewMode === ViewMode.INSTALLATION;
@@ -427,6 +442,21 @@ const App: React.FC = () => {
           {viewMode === ViewMode.CENSORSHIP && (
             <Censorship onBack={() => setViewMode(ViewMode.DEPOSIT)} />
           )}
+
+          {viewMode === ViewMode.METRICS && isAdmin && (
+            <div className="animate-in slide-in-from-bottom-4 duration-500">
+              <button
+                onClick={() => setViewMode(ViewMode.DEPOSIT)}
+                className="mb-6 flex items-center gap-2 text-zinc-500 hover:text-red-500 transition-colors font-mono text-xs uppercase tracking-widest"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Exit Dashboard
+              </button>
+              <MetricsDashboard />
+            </div>
+          )}
         </div>
 
         {viewMode === ViewMode.DEPOSIT && (
@@ -440,6 +470,7 @@ const App: React.FC = () => {
           onPrivacyClick={() => setViewMode(ViewMode.PRIVACY)}
           onCensorshipClick={() => setViewMode(ViewMode.CENSORSHIP)}
           onInstallClick={() => setViewMode(ViewMode.INSTALLATION)}
+          onAdminUnlock={handleAdminUnlock}
         />
       </main>
 
