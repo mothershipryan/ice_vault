@@ -336,7 +336,7 @@ export const storageService = {
     return window.crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
   },
 
-  decryptFile: async (encryptedBlob: Blob, key: CryptoKey, mimeType?: string): Promise<Blob> => {
+  decryptFile: async (encryptedBlob: Blob, key: CryptoKey, mimeType?: string, onProgress?: (percent: number) => void): Promise<Blob> => {
     const CHUNK_SIZE = 5 * 1024 * 1024;
     const ENCRYPTED_PART_SIZE = CHUNK_SIZE + 28;
     let finalMime = mimeType || 'video/mp4';
@@ -354,11 +354,61 @@ export const storageService = {
         const decryptedBuffer = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, ciphertext);
         decryptedParts.push(new Blob([decryptedBuffer]));
         offset += currentPartSize;
+        if (onProgress) onProgress(Math.round((offset / encryptedBlob.size) * 100));
       }
       return new Blob(decryptedParts, { type: finalMime });
     } catch (e: any) {
       throw new Error(`Decryption failed: ${e.message}`);
     }
+  },
+
+  downloadAndDecryptVideo: async (
+    record: UploadRecord,
+    passphrase: string,
+    onProgress: (percent: number, step: string) => void
+  ): Promise<void> => {
+    onProgress(5, "Authenticating...");
+    const key = await storageService.retrieveRecordKey(record.encryptedKeyPayload, passphrase);
+
+    // 1. Get Download URL
+    onProgress(10, "Requesting Access...");
+    const { data: edgeData, error: edgeError } = await supabase.functions.invoke('vault-proxy', {
+      body: {
+        action: 'get_download_url',
+        payload: { key: record.s3Path }
+      }
+    });
+
+    if (edgeError || !edgeData?.url) {
+      throw new Error("Failed to authorize download from secure vault.");
+    }
+
+    // 2. Download Encrypted Blob
+    onProgress(20, "Downloading Encrypted Shards...");
+    const response = await fetch(edgeData.url);
+    if (!response.ok) throw new Error("Download stream failed.");
+    const encryptedBlob = await response.blob();
+
+    // 3. Decrypt
+    onProgress(50, "Decrypting (AES-256-GCM)...");
+    const decryptedBlob = await storageService.decryptFile(
+      encryptedBlob,
+      key,
+      record.mimeType,
+      (p) => onProgress(50 + Math.round(p / 2), "Decrypting...")
+    );
+
+    // 4. Save to Disk
+    onProgress(100, "Finalizing...");
+    const url = window.URL.createObjectURL(decryptedBlob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = record.fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   },
 
   downloadFile: async (s3Path: string): Promise<Blob> => {

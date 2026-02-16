@@ -38,11 +38,20 @@ Deno.serve(async (req) => {
         switch (action) {
             case 'get_presigned_url':
                 // Generate a PUT URL for uploading
-                const url = await s3Client.getPresignedUrl("PUT", payload.key, {
+                const putUrl = await s3Client.getPresignedUrl("PUT", payload.key, {
                     bucketName: BUCKET_NAME,
                     expirySeconds: 3600
                 });
-                result = { url };
+                result = { url: putUrl };
+                break;
+
+            case 'get_download_url':
+                // Generate a GET URL for downloading
+                const getUrl = await s3Client.getPresignedUrl("GET", payload.key, {
+                    bucketName: BUCKET_NAME,
+                    expirySeconds: 3600
+                });
+                result = { url: getUrl };
                 break;
 
             case 'delete_object':
