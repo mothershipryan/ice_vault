@@ -1,16 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-// HARD OVERRIDE: Pointing to German VPS Self-Hosted Supabase
-const FORCED_URL = 'http://supabasekong-xwo48scwcs00owko44wwscwo.46.225.69.82.sslip.io/';
-const FORCED_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3MDY4NjcwMCwiZXhwIjo0OTI2MzYwMzAwLCJyb2xlIjoiYW5vbiJ9.kTof1tUJr_RS41rgbZcWBortzcdqfn7kc36nFKqt5tg';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FORCED_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FORCED_KEY;
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase credentials missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+    supabaseUrl || '',
+    supabaseAnonKey || ''
+);
 
-// Admin client bypasses RLS - only used for Auto-Destruct purges
-export const supabaseAdmin = supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : supabase;

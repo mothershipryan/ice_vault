@@ -1,5 +1,5 @@
 import { UploadRecord } from '../types.ts';
-import { supabase, supabaseAdmin } from './supabaseClient.ts';
+import { supabase } from './supabaseClient.ts';
 
 // Helper: Generate a random 256-bit AES-GCM key
 const generateAESKey = async (): Promise<CryptoKey> => {
@@ -50,7 +50,7 @@ const deriveSearchKey = async (passphrase: string, salt: Uint8Array): Promise<Cr
     {
       name: "PBKDF2",
       salt: salt as BufferSource,
-      iterations: 100000,
+      iterations: 600000,
       hash: "SHA-256"
     },
     passwordKey,
@@ -63,9 +63,15 @@ const deriveSearchKey = async (passphrase: string, salt: Uint8Array): Promise<Cr
 // Helper: Derive a deterministic user ID from passphrase
 const deriveUserIdFromPassphrase = async (passphrase: string): Promise<string> => {
   const encoder = new TextEncoder();
-  const data = encoder.encode(passphrase.trim());
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const passphraseBytes = encoder.encode(passphrase);
+  const staticSalt = encoder.encode('FUCK-ICE-STATIC-SALT-2024'); // Static salt for consistent user ID
+  const baseKey = await window.crypto.subtle.importKey('raw', passphraseBytes, 'PBKDF2', false, ['deriveBits']);
+  const derivedBits = await window.crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: staticSalt, iterations: 600000, hash: 'SHA-256' },
+    baseKey,
+    256
+  );
+  const hashArray = Array.from(new Uint8Array(derivedBits));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
   // Format as UUID for compatibility with Supabase user_id field (UUID v4 format)
