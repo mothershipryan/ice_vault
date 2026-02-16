@@ -48,10 +48,14 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
         setLoading(true);
         setErrorStatus(null);
 
+        const query = stateName && stateName !== state
+          ? `state_id.eq."${state}",state_name.eq."${stateName}"`
+          : `state_id.eq."${state}"`;
+
         const { data, error } = await supabase
           .from('cities')
           .select('city')
-          .or(`state_id.eq."${state}",state_name.eq."${stateName}"`) // Match code (NY) or name (New York)
+          .or(query)
           .ilike('city', `${value}%`)
           .limit(10);
 

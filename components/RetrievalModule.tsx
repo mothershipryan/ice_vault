@@ -99,7 +99,7 @@ const RetrievalModule: React.FC = () => {
             setStateName(name);
           }}
         />
-        <CityInput value={city} onChange={setCity} state={state} />
+        <CityInput value={city} onChange={setCity} state={state} stateName={stateName} />
         <DatePicker value={date} onChange={setDate} />
 
         <button
