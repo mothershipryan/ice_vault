@@ -30,6 +30,11 @@ const RetrievalModule: React.FC = () => {
         }
       );
 
+      // Auto-purge logic (Burn after reading)
+      setDownloadState({ id: rec.id, progress: 100, step: 'Purging from Vault...' });
+      await storageService.deleteRecord(rec.id, rec.s3Path, rec.isLegacy);
+      setResults(prev => prev.filter(r => r.id !== rec.id));
+
       setDownloadState(null);
     } catch (err: any) {
       console.error(err);
