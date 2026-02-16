@@ -20,9 +20,13 @@ import { validatePassphraseStrength, PassphraseStrength } from './utils/passphra
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DEPOSIT);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedStateName, setSelectedStateName] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
+
   // Initialize with LOCAL date (YYYY-MM-DD) instead of UTC to avoid timezone shift bugs
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date();
@@ -31,13 +35,14 @@ const App: React.FC = () => {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   });
+
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [progress, setProgress] = useState<number>(0);
   const [uploadStep, setUploadStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
-  const [passphrase, setPassphrase] = useState<string>(''); // NEW
+  const [passphrase, setPassphrase] = useState<string>('');
   const [passphraseStrength, setPassphraseStrength] = useState<PassphraseStrength | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -148,15 +153,21 @@ const App: React.FC = () => {
   };
 
   const handleAdminUnlock = () => {
-    const pin = prompt('Enter Admin PIN:');
-    // Using a default fallback for local dev if env not set
-    const correctPin = import.meta.env.VITE_ADMIN_PIN || '1234';
+    setShowPinModal(true);
+    setPinInput('');
+    setPinError(false);
+  };
 
-    if (pin === correctPin) {
+  const handlePinSubmit = () => {
+    const correctPin = import.meta.env.VITE_ADMIN_PIN || '1234';
+    if (pinInput === correctPin) {
       setIsAdmin(true);
+      setShowPinModal(false);
       setViewMode(ViewMode.METRICS);
-    } else if (pin !== null) {
-      alert('Access Denied');
+    } else {
+      setPinError(true);
+      setPinInput('');
+      setTimeout(() => setPinError(false), 2000);
     }
   };
 
@@ -211,10 +222,9 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* glass Card */}
-        <div className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-6 md:p-10 flex-1 transition-colors duration-500">
-
-          {viewMode === ViewMode.DEPOSIT && (
+        {/* Content Area */}
+        {viewMode === ViewMode.DEPOSIT && (
+          <div className="glass-card bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl p-6 md:p-10 flex-1 transition-colors duration-500">
             <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
               {status === AppStatus.SUCCESS && (
                 <div className="space-y-4">
@@ -323,7 +333,6 @@ const App: React.FC = () => {
                     className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
                   />
 
-                  {/* Passphrase strength indicator */}
                   {passphrase && passphraseStrength && (
                     <div className="space-y-1 px-1">
                       <div className="flex items-center gap-2">
@@ -333,71 +342,43 @@ const App: React.FC = () => {
                             style={{ width: `${(passphraseStrength.score / 5) * 100}%` }}
                           />
                         </div>
-                        <span className={`text-[9px] font-bold uppercase tracking-wide ${passphraseStrength.valid ? 'text-green-400' : 'text-orange-400'
-                          }`}>
+                        <span className={`text-[9px] font-bold uppercase tracking-wide ${passphraseStrength.valid ? 'text-green-400' : 'text-orange-400'}`}>
                           {passphraseStrength.label}
                         </span>
                       </div>
                       {!passphraseStrength.valid && (
-                        <p className="text-[10px] text-orange-400 font-medium">
-                          {passphraseStrength.message}
-                        </p>
+                        <p className="text-[10px] text-orange-400 font-medium">{passphraseStrength.message}</p>
                       )}
                     </div>
                   )}
 
-                  {/* Info card */}
                   <div className="bg-blue-600/5 dark:bg-blue-500/5 border border-blue-600/10 dark:border-blue-500/10 rounded-lg p-3 space-y-1.5">
                     <p className="text-[10px] text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wide">How it works:</p>
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Files are grouped by <span className="text-blue-700 dark:text-blue-300 font-semibold">passphrase + location</span>. You must use the same passphrase, state, city, and date to retrieve your files. Different values = isolated vaults.
+                      Files are grouped by <span className="text-blue-700 dark:text-blue-300 font-semibold">passphrase + location</span>. You must use the same passphrase, state, city, and date to retrieve your files.
                     </p>
                   </div>
-
-                  <p className="text-xs text-slate-500 dark:text-slate-500 font-medium px-1 leading-relaxed">
-                    This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.
-                  </p>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
-                    Data Source
-                  </label>
-                  <div
-                    className={`relative h-48 border-2 border-dashed rounded-[1.75rem] transition-all flex flex-col items-center justify-center p-6 text-center
-                      ${file ? 'border-blue-600 dark:border-blue-400 bg-blue-600/5 dark:bg-blue-500/10' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 active:bg-slate-200 dark:active:bg-slate-800'}
-                      ${status === AppStatus.UPLOADING ? 'opacity-50 pointer-events-none' : ''}
-                    `}
-                  >
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={handleFileChange}
-                      className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                    />
+                  <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">Data Source</label>
+                  <div className={`relative h-48 border-2 border-dashed rounded-[1.75rem] transition-all flex flex-col items-center justify-center p-6 text-center
+                    ${file ? 'border-blue-600 dark:border-blue-400 bg-blue-600/5 dark:bg-blue-500/10' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80'}
+                    ${status === AppStatus.UPLOADING ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <input type="file" accept="video/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
                     {!file ? (
                       <div className="space-y-3">
-                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400 shadow-sm dark:shadow-lg border border-slate-100 dark:border-slate-700">
+                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400 shadow-sm border border-slate-100 dark:border-slate-700">
                           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
-                        <div>
-                          <p className="text-slate-800 dark:text-slate-200 text-sm font-bold">Select Video</p>
-                          <p className="text-slate-500 dark:text-slate-500 text-[10px] mt-1 font-medium tracking-widest uppercase">Tap to scan storage</p>
-                        </div>
+                        <p className="text-slate-800 dark:text-slate-200 text-sm font-bold">Select Video</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-blue-600/10 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center mb-3 border border-blue-600/20 dark:border-blue-400/30">
-                          <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                          </svg>
-                        </div>
                         <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">Asset Loaded</p>
-                        <p className="text-slate-600 dark:text-slate-400 text-[11px] font-medium truncate max-w-[200px]">
-                          {file.name}
-                        </p>
+                        <p className="text-slate-600 dark:text-slate-400 text-[11px] font-medium truncate max-w-[200px]">{file.name}</p>
                       </div>
                     )}
                   </div>
@@ -411,15 +392,12 @@ const App: React.FC = () => {
                   className={`group w-full h-[64px] font-black rounded-[1.5rem] transition-all uppercase tracking-[0.25em] text-xs flex items-center justify-center gap-3 border relative overflow-hidden active:scale-[0.98]
                     ${status === AppStatus.UPLOADING
                       ? 'bg-blue-600/20 text-blue-600 border-blue-600/30'
-                      : 'bg-blue-600 text-white shadow-[0_15px_30px_rgba(37,99,235,0.2)] border-blue-400/20 shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:scale-100'
+                      : 'bg-blue-600 text-white shadow-lg border-blue-400/20 hover:bg-blue-700 disabled:opacity-30'
                     }`}
                 >
                   {status === AppStatus.UPLOADING ? (
                     <>
-                      <div
-                        className="absolute left-0 top-0 bottom-0 bg-blue-600/10 transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
+                      <div className="absolute left-0 top-0 bottom-0 bg-blue-600/10 transition-all duration-300" style={{ width: `${progress}%` }} />
                       <span className="relative z-10 flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         {uploadStep} ({progress}%)
@@ -436,37 +414,28 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {viewMode === ViewMode.RETRIEVAL && <RetrievalModule />}
+        {viewMode === ViewMode.RETRIEVAL && <RetrievalModule />}
+        {viewMode === ViewMode.INSTALLATION && <InstallationGuide onBack={() => setViewMode(ViewMode.DEPOSIT)} />}
+        {viewMode === ViewMode.PRIVACY && <PrivacyPolicy onBack={() => setViewMode(ViewMode.DEPOSIT)} />}
+        {viewMode === ViewMode.CENSORSHIP && <Censorship onBack={() => setViewMode(ViewMode.DEPOSIT)} />}
 
-          {viewMode === ViewMode.INSTALLATION && (
-            <InstallationGuide onBack={() => setViewMode(ViewMode.DEPOSIT)} />
-          )}
-
-          {viewMode === ViewMode.PRIVACY && (
-            <PrivacyPolicy onBack={() => setViewMode(ViewMode.DEPOSIT)} />
-          )}
-
-          {viewMode === ViewMode.CENSORSHIP && (
-            <Censorship onBack={() => setViewMode(ViewMode.DEPOSIT)} />
-          )}
-
-          {viewMode === ViewMode.METRICS && isAdmin && (
-            <div className="animate-in slide-in-from-bottom-4 duration-500">
-              <button
-                onClick={() => setViewMode(ViewMode.DEPOSIT)}
-                className="mb-6 flex items-center gap-2 text-zinc-500 hover:text-red-500 transition-colors font-mono text-xs uppercase tracking-widest"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Exit Dashboard
-              </button>
-              <MetricsDashboard />
-            </div>
-          )}
-        </div>
+        {viewMode === ViewMode.METRICS && isAdmin && (
+          <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <button
+              onClick={() => setViewMode(ViewMode.DEPOSIT)}
+              className="mb-6 flex items-center gap-2 text-zinc-500 hover:text-red-500 transition-colors font-mono text-xs uppercase tracking-widest"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Exit Dashboard
+            </button>
+            <MetricsDashboard />
+          </div>
+        )}
 
         {viewMode === ViewMode.DEPOSIT && (
           <>
@@ -483,8 +452,59 @@ const App: React.FC = () => {
         />
       </main>
 
+      {/* PIN Entry Modal Overlay */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setShowPinModal(false)} />
+          <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 w-full max-w-[320px] shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="text-center space-y-4">
+              <div className="p-3 bg-red-500/10 rounded-full w-12 h-12 mx-auto flex items-center justify-center text-red-500">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-sm">Terminal Access</h3>
+                <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mt-1">Enter Authorization Code</p>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoFocus
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
+                  className={`w-full bg-slate-100 dark:bg-slate-950 border-2 ${pinError ? 'border-red-500 animate-shake' : 'border-slate-200 dark:border-white/5'} rounded-2xl px-4 py-4 text-center text-2xl font-black tracking-[0.5em] focus:outline-none focus:border-red-500 transition-all text-slate-900 dark:text-white`}
+                  placeholder="••••"
+                />
+                {pinError && (
+                  <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase animate-in fade-in duration-300">Invalid Protocol Code</p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowPinModal(false)}
+                  className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                >
+                  Abort
+                </button>
+                <button
+                  onClick={handlePinSubmit}
+                  className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-600 text-white shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                >
+                  Authorize
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="fixed top-0 left-0 w-full h-1/2 bg-blue-600/5 dark:bg-blue-500/5 blur-[120px] pointer-events-none -z-10" />
-    </div >
+    </div>
   );
 };
 

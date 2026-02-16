@@ -110,44 +110,46 @@ const MetricsDashboard: React.FC = () => {
                     File Distribution by State
                 </h3>
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 rounded-xl overflow-hidden backdrop-blur-sm transition-colors duration-300">
-                    {metrics?.stateDistribution.length === 0 ? (
-                        <p className="p-8 text-center text-zinc-600 italic">No record data found.</p>
-                    ) : (
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-zinc-800/50 dark:bg-zinc-900/50 text-zinc-500 font-mono text-xs uppercase">
-                                <tr>
-                                    <th className="px-6 py-3 font-medium">State</th>
-                                    <th className="px-6 py-3 font-medium">Record Count</th>
-                                    <th className="px-6 py-3 font-medium">Share</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-500/10">
-                                {metrics?.stateDistribution.map((item) => (
-                                    <tr key={item.state} className="hover:bg-red-500/5 transition-colors group">
-                                        <td className="px-6 py-4 font-bold text-zinc-300 group-hover:text-red-400">
-                                            {item.state}
-                                        </td>
-                                        <td className="px-6 py-4 text-zinc-400 font-mono">
-                                            {item.count}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-red-600 rounded-full"
-                                                        style={{ width: `${(item.count / (metrics?.totalRecords || 1)) * 100}%` }}
-                                                    ></div>
-                                                </div>
-                                                <span className="text-zinc-600 text-[10px] font-mono">
-                                                    {Math.round((item.count / (metrics?.totalRecords || 1)) * 100)}%
-                                                </span>
-                                            </div>
-                                        </td>
+                    <div className="overflow-x-auto">
+                        {metrics?.stateDistribution.length === 0 ? (
+                            <p className="p-8 text-center text-zinc-600 italic">No record data found.</p>
+                        ) : (
+                            <table className="w-full text-left text-sm min-w-[500px]">
+                                <thead className="bg-zinc-800/50 dark:bg-zinc-900/50 text-zinc-500 font-mono text-xs uppercase">
+                                    <tr>
+                                        <th className="px-6 py-3 font-medium">State</th>
+                                        <th className="px-6 py-3 font-medium">Record Count</th>
+                                        <th className="px-6 py-3 font-medium">Share</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+                                </thead>
+                                <tbody className="divide-y divide-zinc-500/10">
+                                    {metrics?.stateDistribution.map((item) => (
+                                        <tr key={item.state} className="hover:bg-red-500/5 transition-colors group">
+                                            <td className="px-6 py-4 font-bold text-zinc-300 group-hover:text-red-400">
+                                                {item.state}
+                                            </td>
+                                            <td className="px-6 py-4 text-zinc-400 font-mono">
+                                                {item.count}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-red-600 rounded-full"
+                                                            style={{ width: `${(item.count / (metrics?.totalRecords || 1)) * 100}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="text-zinc-600 text-[10px] font-mono">
+                                                        {Math.round((item.count / (metrics?.totalRecords || 1)) * 100)}%
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
                 </div>
             </section>
 
@@ -156,30 +158,32 @@ const MetricsDashboard: React.FC = () => {
                     Recent Activity Logs
                 </h3>
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 rounded-xl overflow-hidden backdrop-blur-sm transition-colors duration-300">
-                    {metrics?.recentLogs.length === 0 ? (
-                        <p className="p-8 text-center text-zinc-600 italic">No recent logs found.</p>
-                    ) : (
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-zinc-800/50 dark:bg-zinc-900/50 text-zinc-500 font-mono text-xs uppercase">
-                                <tr>
-                                    <th className="px-6 py-3 font-medium">Action</th>
-                                    <th className="px-6 py-3 font-medium">Description</th>
-                                    <th className="px-6 py-3 font-medium">Timestamp</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-500/10">
-                                {metrics?.recentLogs.map((log) => (
-                                    <tr key={log.id} className="hover:bg-red-500/5 transition-colors group">
-                                        <td className="px-6 py-4 font-mono text-zinc-400 group-hover:text-red-400">{log.action_type}</td>
-                                        <td className="px-6 py-4 text-zinc-300">{log.description}</td>
-                                        <td className="px-6 py-4 text-zinc-500 font-mono text-xs">
-                                            {new Date(log.created_at).toLocaleString()}
-                                        </td>
+                    <div className="overflow-x-auto">
+                        {metrics?.recentLogs.length === 0 ? (
+                            <p className="p-8 text-center text-zinc-600 italic">No recent logs found.</p>
+                        ) : (
+                            <table className="w-full text-left text-sm min-w-[500px]">
+                                <thead className="bg-zinc-800/50 dark:bg-zinc-900/50 text-zinc-500 font-mono text-xs uppercase">
+                                    <tr>
+                                        <th className="px-6 py-3 font-medium">Action</th>
+                                        <th className="px-6 py-3 font-medium">Description</th>
+                                        <th className="px-6 py-3 font-medium">Timestamp</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+                                </thead>
+                                <tbody className="divide-y divide-zinc-500/10">
+                                    {metrics?.recentLogs.map((log) => (
+                                        <tr key={log.id} className="hover:bg-red-500/5 transition-colors group">
+                                            <td className="px-6 py-4 font-mono text-zinc-400 group-hover:text-red-400">{log.action_type}</td>
+                                            <td className="px-6 py-4 text-zinc-300">{log.description}</td>
+                                            <td className="px-6 py-4 text-zinc-500 font-mono text-xs">
+                                                {new Date(log.created_at).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
                 </div>
             </section>
         </div>
