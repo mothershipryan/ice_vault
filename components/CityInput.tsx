@@ -15,7 +15,7 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
-  const [justSelected, setJustSelected] = useState(false);
+  const selectionRef = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Close suggestions on click outside
@@ -32,9 +32,8 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        // Skip if user just selected a city
-        if (justSelected) {
-          setJustSelected(false);
+        if (selectionRef.current) {
+          selectionRef.current = false;
           return;
         }
 
@@ -53,9 +52,10 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
           .select('city')
           .eq('state_id', state)
           .ilike('city', `${value}%`)
-          .limit(10);
+          .limit(100);
 
         if (error) {
+          console.warn('[Vault] City fetch error:', error.message);
           return;
         }
 
@@ -71,10 +71,10 @@ const CityInput: React.FC<CityInputProps> = ({ value, onChange, disabled, state,
 
     const timeoutId = setTimeout(fetchCities, 400);
     return () => clearTimeout(timeoutId);
-  }, [value, state, stateName, justSelected]);
+  }, [value, state]);
 
   const handleSelect = (city: string) => {
-    setJustSelected(true);
+    selectionRef.current = true;
     onChange(city);
     setShowSuggestions(false);
   };
