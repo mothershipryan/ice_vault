@@ -196,8 +196,8 @@ const App: React.FC = () => {
               <span className="text-blue-700 dark:text-blue-300 text-[10px] font-bold tracking-widest uppercase">{t('app.status')}</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-[0.9]">
-              {t('app.title').split(' ')[0]} {t('app.title').split(' ')[1]} {t('app.title').split(' ')[2]}<br />
-              <span className="text-blue-600 dark:text-blue-400">{t('app.title').split(' ')[3]}</span>
+              {t('app.title').split(' ')[0]} {t('app.title').split(' ')[1]}<br />
+              <span className="text-blue-600 dark:text-blue-400">{t('app.title').split(' ')[2]}</span>
             </h1>
             <div className="space-y-4">
               <p className="text-slate-600 dark:text-slate-400 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase opacity-80 whitespace-nowrap">
