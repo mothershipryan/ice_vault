@@ -38,6 +38,22 @@ const RetrievalModule: React.FC = () => {
     }
   };
 
+  const handleDelete = async (rec: UploadRecord) => {
+    if (!window.confirm("Permanently purge this asset from the vault? This cannot be undone.")) return;
+
+    setLoading(true);
+    try {
+      await storageService.deleteRecord(rec.id, rec.s3Path, rec.isLegacy);
+      setResults(prev => prev.filter(r => r.id !== rec.id));
+      alert("Asset successfully purged from database and S3.");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Purge Failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = async () => {
     if (!vaultKey || !vaultKey.trim()) {
       alert("Ghost Vault: You must enter a Passphrase or Backup Key to find your files.");
@@ -170,33 +186,46 @@ const RetrievalModule: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => handleDownload(rec)}
-                disabled={!!downloadState}
-                id={`btn-${rec.id}`}
-                className={`flex items-center justify-center gap-2 w-full py-3 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer relative overflow-hidden
-                  ${downloadState?.id === rec.id
-                    ? 'bg-blue-600/20 text-blue-600 border-blue-600/30'
-                    : 'bg-blue-600/10 dark:bg-blue-500/10 hover:bg-blue-600/20 dark:hover:bg-blue-500/20 border-blue-600/20 dark:border-blue-400/20 text-blue-700 dark:text-blue-400'
-                  }`}
-              >
-                {downloadState?.id === rec.id ? (
-                  <>
-                    <div className="absolute left-0 top-0 bottom-0 bg-blue-600/10 transition-all duration-300" style={{ width: `${downloadState.progress}%` }} />
-                    <span className="relative z-10 flex items-center gap-2">
-                      <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      {downloadState.step} ({downloadState.progress}%)
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                    </svg>
-                    Decrypt & Download
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleDownload(rec)}
+                  disabled={!!downloadState}
+                  id={`btn-${rec.id}`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer relative overflow-hidden
+                    ${downloadState?.id === rec.id
+                      ? 'bg-blue-600/20 text-blue-600 border-blue-600/30'
+                      : 'bg-blue-600/10 dark:bg-blue-500/10 hover:bg-blue-600/20 dark:hover:bg-blue-500/20 border-blue-600/20 dark:border-blue-400/20 text-blue-700 dark:text-blue-400'
+                    }`}
+                >
+                  {downloadState?.id === rec.id ? (
+                    <>
+                      <div className="absolute left-0 top-0 bottom-0 bg-blue-600/10 transition-all duration-300" style={{ width: `${downloadState.progress}%` }} />
+                      <span className="relative z-10 flex items-center gap-2">
+                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        {downloadState.step} ({downloadState.progress}%)
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                      </svg>
+                      Decrypt & Download
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleDelete(rec)}
+                  disabled={!!downloadState || loading}
+                  className="px-4 flex items-center justify-center bg-red-600/10 dark:bg-red-500/10 hover:bg-red-600/20 dark:hover:bg-red-500/20 border border-red-600/20 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl transition-all"
+                  title="Purge Asset"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>
