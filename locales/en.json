@@ -30,7 +30,7 @@
         "retrieval": "Retrieval",
         "passphrase_label": "Personal Vault Passphrase",
         "zero_knowledge": "Zero Knowledge",
-        "passphrase_placeholder": "CREATE A SECURE PASSPHRASE",
+        "passphrase_placeholder": "SECURE PASSPHRASE",
         "how_it_works": "How it works:",
         "isolated_vaults": "Files are grouped by passphrase + location. You must use the same passphrase, state, city, and date to retrieve your files.",
         "primary_method": "This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.",

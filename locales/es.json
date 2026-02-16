@@ -30,7 +30,7 @@
         "retrieval": "Recuperación",
         "passphrase_label": "Frase de Seguridad Personal",
         "zero_knowledge": "Conocimiento Cero",
-        "passphrase_placeholder": "CREA UNA FRASE DE SEGURIDAD SEGURA",
+        "passphrase_placeholder": "FRASE DE SEGURIDAD",
         "how_it_works": "Cómo funciona:",
         "isolated_vaults": "Los archivos se agrupan por frase de seguridad + ubicación. Debe usar la misma frase, estado, ciudad y fecha para recuperarlos.",
         "primary_method": "Este es su método de recuperación PRINCIPAL. NUNCA se envía a nuestros servidores. Si lo pierde, su video solo podrá recuperarse con la Llave de Respaldo de Emergencia.",

@@ -30,7 +30,7 @@
         "retrieval": "检索",
         "passphrase_label": "个人保险库密码",
         "zero_knowledge": "零知识",
-        "passphrase_placeholder": "创建一个安全的密码",
+        "passphrase_placeholder": "安全密码",
         "how_it_works": "工作原理：",
         "isolated_vaults": "文件按密码 + 位置分组。您必须使用相同的密码、州、城市和日期来检索您的文件。",
         "primary_method": "这是您的主要检索方法。它绝不会发送到我们的服务器。如果您丢失了它，您的视频只能使用紧急备用密钥恢复。",
