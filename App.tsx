@@ -159,8 +159,8 @@ const App: React.FC = () => {
   };
 
   const handlePinSubmit = () => {
-    const correctPin = import.meta.env.VITE_ADMIN_PIN || '7148284565';
-    if (pinInput === correctPin) {
+    const correctPin = import.meta.env.VITE_ADMIN_PIN;
+    if (correctPin && pinInput === correctPin) {
       setIsAdmin(true);
       setShowPinModal(false);
       setViewMode(ViewMode.METRICS);
