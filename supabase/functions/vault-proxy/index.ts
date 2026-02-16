@@ -31,6 +31,10 @@ Deno.serve(async (req) => {
         let result;
 
         switch (action) {
+            case 'ping':
+                result = { message: 'pong', timestamp: new Date().toISOString() };
+                break;
+
             case 'get_presigned_url':
                 const command = new PutObjectCommand({
                     Bucket: 'fuckicevault',
@@ -61,7 +65,11 @@ Deno.serve(async (req) => {
 
     } catch (error) {
         console.error(`[Vault-Proxy] error: ${error.message}`);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({
+            error: error.message,
+            stack: error.stack,
+            hint: "Check if all secrets (HETZNER_S3_ACCESS_KEY_ID, HETZNER_S3_SECRET_ACCESS_KEY, VITE_S3_ENDPOINT, VITE_S3_REGION) are set in Supabase."
+        }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
         });
