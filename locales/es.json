@@ -234,5 +234,12 @@
             ]
         },
         "return_link": "Volver a la Bóveda"
+    },
+    "footer": {
+        "contact": "Contacto",
+        "privacy": "Privacidad",
+        "censorship": "Censura",
+        "stickers": "Calcomanías",
+        "install_mobile": "Instalar App Móvil"
     }
 }

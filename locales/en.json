@@ -234,5 +234,12 @@
             ]
         },
         "return_link": "Return to Vault"
+    },
+    "footer": {
+        "contact": "Contact",
+        "privacy": "Privacy",
+        "censorship": "Censorship",
+        "stickers": "Stickers",
+        "install_mobile": "Install Mobile App"
     }
 }
