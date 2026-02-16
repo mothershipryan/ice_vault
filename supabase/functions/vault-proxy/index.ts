@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
                 throw new Error(`Invalid action: ${action}`);
         }
 
-        return new Response(JSON.stringify({ data: result }), {
+        return new Response(JSON.stringify(result), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
         });

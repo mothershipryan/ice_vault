@@ -264,7 +264,7 @@ export const storageService = {
       throw new Error(`Cloud Proxy Error: ${edgeError.message}`);
     }
 
-    const presignedUrl = edgeData?.url;
+    const presignedUrl = edgeData?.url || (edgeData as any)?.data?.url;
 
     if (!presignedUrl) throw new Error("Failed to get pre-signed upload URL");
 
