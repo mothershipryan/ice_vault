@@ -248,21 +248,23 @@ export const storageService = {
     const s3Path = `${derivedUserId}/${state.toLowerCase()}/${city.toLowerCase()}/${window.crypto.randomUUID()}.enc`;
 
     onProgress(75);
-    // 1. Get Pre-signed URL from Proxy
-    const { data: { url: presignedUrl } } = await fetch('/api/vault', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-      },
-      body: JSON.stringify({
+    // 1. Get Pre-signed URL from Supabase Edge Function
+    const { data: edgeData, error: edgeError } = await supabase.functions.invoke('vault-proxy', {
+      body: {
         action: 'get_presigned_url',
         payload: {
           key: s3Path,
-          fileType: 'application/octet-stream' // Encrypted files are binary
+          fileType: 'application/octet-stream'
         }
-      })
-    }).then(res => res.json());
+      }
+    });
+
+    if (edgeError) {
+      console.error(`[Vault] Edge Function Error:`, edgeError);
+      throw new Error(`Cloud Proxy Error: ${edgeError.message}`);
+    }
+
+    const presignedUrl = edgeData?.url;
 
     if (!presignedUrl) throw new Error("Failed to get pre-signed upload URL");
 
@@ -426,26 +428,20 @@ export const storageService = {
       throw dbErr; // Re-throw to prevent storage deletion if DB fails
     }
 
-    // 2. Delete from S3 via Proxy (only if database deletion succeeded)
+    // 2. Delete from S3 via Edge Function Proxy (only if database deletion succeeded)
     try {
-      const deleteRes = await fetch('/api/vault', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
+      const { data: deleteData, error: deleteError } = await supabase.functions.invoke('vault-proxy', {
+        body: {
           action: 'delete_object',
           payload: { key: s3Path }
-        })
+        }
       });
 
-      if (!deleteRes.ok) {
-        const errData = await deleteRes.json();
-        throw new Error(errData.error || `S3 deletion failed: ${deleteRes.statusText}`);
+      if (deleteError) {
+        throw new Error(deleteError.message || `S3 deletion failed`);
       }
 
-      console.log(`[Vault] ✓ S3 file purged successfully via proxy.`);
+      console.log(`[Vault] ✓ S3 file purged successfully via Edge Function.`);
     } catch (storageErr: any) {
       console.error(`[Vault] S3 deletion error:`, storageErr);
       throw new Error(`S3 deletion failed after DB deletion: ${storageErr.message}`);
