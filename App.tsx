@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [progress, setProgress] = useState<number>(0);
+  const [uploadStep, setUploadStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState<string>(''); // NEW
@@ -122,7 +123,10 @@ const App: React.FC = () => {
         selectedCity,
         selectedDate,
         passphrase.trim(),
-        (p) => setProgress(p)
+        (p, s) => {
+          setProgress(p);
+          setUploadStep(s);
+        }
       );
       setRecoveryKey(result.recoveryKey || null);
       setStatus(AppStatus.SUCCESS);
@@ -137,6 +141,7 @@ const App: React.FC = () => {
   const reset = () => {
     setStatus(AppStatus.IDLE);
     setProgress(0);
+    setUploadStep('');
     setError(null);
     setRecoveryKey(null);
     setCopied(false);
@@ -400,31 +405,35 @@ const App: React.FC = () => {
               </div>
 
               <div className="pt-4">
-                {status === AppStatus.UPLOADING ? (
-                  <div className="space-y-4 py-2">
-                    <div className="flex justify-between items-center px-1">
-                      <span className="text-blue-700 dark:text-blue-300 text-[10px] font-black uppercase tracking-widest">Uploading...</span>
-                      <span className="text-blue-600 dark:text-blue-400 text-xs font-black">{progress}%</span>
-                    </div>
-                    <div className="h-3 w-full bg-white dark:bg-slate-800 rounded-full overflow-hidden p-[1px] border border-slate-100 dark:border-slate-700">
+                <button
+                  onClick={handleUpload}
+                  disabled={!file || !selectedState || status === AppStatus.UPLOADING}
+                  className={`group w-full h-[64px] font-black rounded-[1.5rem] transition-all uppercase tracking-[0.25em] text-xs flex items-center justify-center gap-3 border relative overflow-hidden active:scale-[0.98]
+                    ${status === AppStatus.UPLOADING
+                      ? 'bg-blue-600/20 text-blue-600 border-blue-600/30'
+                      : 'bg-blue-600 text-white shadow-[0_15px_30px_rgba(37,99,235,0.2)] border-blue-400/20 shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:scale-100'
+                    }`}
+                >
+                  {status === AppStatus.UPLOADING ? (
+                    <>
                       <div
-                        className="h-full bg-gradient-to-r from-blue-700 to-blue-500 dark:from-blue-600 dark:to-blue-400 rounded-full transition-all duration-300"
+                        className="absolute left-0 top-0 bottom-0 bg-blue-600/10 transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleUpload}
-                    disabled={!file || !selectedState}
-                    className="group w-full h-[64px] bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 active:scale-[0.98] text-white font-black rounded-[1.5rem] shadow-[0_15px_30px_rgba(37,99,235,0.2)] transition-all disabled:opacity-30 disabled:grayscale disabled:scale-100 uppercase tracking-[0.25em] text-xs flex items-center justify-center gap-3 border border-blue-400/20 shadow-blue-500/20"
-                  >
-                    <span>Upload to Vault</span>
-                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </button>
-                )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        {uploadStep} ({progress}%)
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Upload to Vault</span>
+                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}

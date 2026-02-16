@@ -167,7 +167,7 @@ const unwrapKey = async (wrappedKeyStr: string, kek: CryptoKey): Promise<CryptoK
 const encryptFileInChunks = async (
   file: File,
   key: CryptoKey,
-  onProgress: (percent: number) => void
+  onProgress: (percent: number, step: string) => void
 ): Promise<Blob> => {
   const CHUNK_SIZE = 5 * 1024 * 1024;
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
@@ -187,7 +187,7 @@ const encryptFileInChunks = async (
 
     encryptedParts.push(new Blob([iv, encryptedBuffer]));
     offset += CHUNK_SIZE;
-    onProgress(Math.round((i / totalChunks) * 50));
+    onProgress(5 + Math.round((i / totalChunks) * 45), "Encrypting Shards...");
   }
 
   return new Blob(encryptedParts);
@@ -214,26 +214,30 @@ export const storageService = {
     city: string,
     date: string,
     passphrase: string,
-    onProgress: (progress: number) => void
+    onProgress: (progress: number, step: string) => void
   ): Promise<UploadRecord> => {
+    onProgress(1, "Deriving Identity...");
     // Derive a deterministic user ID from the passphrase
     const derivedUserId = await deriveUserIdFromPassphrase(passphrase);
     console.log(`[Vault] Using passphrase-derived user ID: ${derivedUserId.slice(0, 8)}...`);
 
-    onProgress(1);
+    onProgress(5, "Generating Session Keys...");
     const secretKey = await generateAESKey();
     const encryptedBlob = await encryptFileInChunks(file, secretKey, onProgress);
 
+    onProgress(55, "Deriving KEK & Search Keys...");
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const kek = await deriveKEK(passphrase, salt);
     const searchKey = await deriveSearchKey(passphrase, salt);
 
+    onProgress(60, "Wrapping Payload Keys...");
     const wrappedKeyStr = await wrapKey(secretKey, kek);
     const mimeType = file.type || guessMimeType(file.name);
 
     const metadataMsg = { filename: file.name, mime_type: mimeType, upload_date: date, state: state.trim(), city: city.trim() };
     const encryptedMetadata = await encryptMetadata(metadataMsg, kek);
 
+    onProgress(65, "Blind Indexing (State/City)...");
     const blindIndexState = await calculateBlindIndex(state, searchKey);
     const blindIndexCity = await calculateBlindIndex(city, searchKey);
     const blindIndexDate = await calculateBlindIndex(date, searchKey);
@@ -241,13 +245,9 @@ export const storageService = {
     const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
     const dbKeyPayload = `PWV2:${saltHex}:${wrappedKeyStr}`;
 
-    const bucketName = 'fuckicevault';
-    const randomName = crypto.randomUUID();
-    const cleanState = state.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const cleanCity = city.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const s3Path = `${derivedUserId}/${state.toLowerCase()}/${city.toLowerCase()}/${window.crypto.randomUUID()}.enc`;
 
-    onProgress(75);
+    onProgress(70, "Requesting Proxy Access...");
     // 1. Get Pre-signed URL from Supabase Edge Function
     const { data: edgeData, error: edgeError } = await supabase.functions.invoke('vault-proxy', {
       body: {
@@ -268,6 +268,7 @@ export const storageService = {
 
     if (!presignedUrl) throw new Error("Failed to get pre-signed upload URL");
 
+    onProgress(75, "Uploading Shards to S3...");
     // 2. Upload directly to S3
     const s3UploadRes = await fetch(presignedUrl, {
       method: 'PUT',
@@ -277,7 +278,7 @@ export const storageService = {
 
     if (!s3UploadRes.ok) throw new Error(`S3 Upload Failed: ${s3UploadRes.statusText}`);
 
-    onProgress(95);
+    onProgress(95, "Committing to Ledger...");
     const { error: dbError } = await supabase.from('videos').insert({
       user_id: derivedUserId,
       blind_index_state: blindIndexState,
@@ -293,7 +294,7 @@ export const storageService = {
 
     if (dbError) throw new Error(`Database Error: ${dbError.message}`);
 
-    onProgress(100);
+    onProgress(100, "Complete");
     const exportedRaw = await window.crypto.subtle.exportKey('raw', secretKey);
     return {
       id: "SUCCESS",
