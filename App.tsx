@@ -200,7 +200,7 @@ const App: React.FC = () => {
               <span className="text-blue-600 dark:text-blue-400">{t('app.title').split(' ')[3]}</span>
             </h1>
             <div className="space-y-4">
-              <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
+              <p className="text-slate-600 dark:text-slate-400 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase opacity-80 whitespace-nowrap">
                 {t('app.subtitle')}
               </p>
               <div className="flex justify-center pt-2">
