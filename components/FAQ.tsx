@@ -27,8 +27,8 @@ const FAQ_ITEMS = [
     a: "Because ICE Vault uploads directly to our secure European Retrieval Terminal, the footage is preserved even if the physical device is destroyed or confiscated immediately after the upload completes."
   },
   {
-    q: "Can I delete or edit uploads?",
-    a: "Negative. To maintain evidentiary integrity, all vault deposits are immutable once finalized. No post-upload modification is permitted to prevent claims of tampering."
+    q: "Can I delete my uploads?",
+    a: "Yes. You can manually purge any record using the 'Burn' icon in the Retrieval Terminal. Additionally, the vault now supports 'Burn After Reading' logic—once you successfully decrypt and save a file, it is automatically and permanently erased from the S3 storage and the database."
   },
   {
     q: "Why isn't this available on the App Store or Google Play?",

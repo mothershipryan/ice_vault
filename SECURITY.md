@@ -41,7 +41,7 @@ We utilize the **Web Crypto API**, a native browser standard for secure operatio
 ### Key Derivation (Passphrase to KEK)
 We use **PBKDF2** (Password-Based Key Derivation Function 2) with the following parameters:
 - **Algorithm**: HMAC-SHA256
-- **Iterations**: 100,000 (Protected against GPU/ASIC brute-force)
+- **Iterations**: 600,000 (Highly resistant to GPU/ASIC brute-force, exceeding industry standards)
 - **Salt**: 128-bit unique random salt generated per upload (Prevents rainbow table attacks).
 
 ### File Encryption (DEK to Video)
@@ -61,6 +61,12 @@ We use **AES-256-GCM** (Galois/Counter Mode):
    - Browser derives KEK from Passphrase + random Salt.
    - Browser encrypts the DEK using the KEK (Resulting in a "Wrapped Key").
 4. **Transmission**: The encrypted video and the **Wrapped Key** (with its salt) are sent to storage/database. The raw keys are discarded from memory.
+   - **Storage**: Infrastructure is hosted in Germany (nbg1) using Hetzner S3 via a secure Edge Function proxy.
+
+### Binary Erasure (Auto-Purge)
+To ensure zero residual footprint, the vault implements **Burn After Reading**:
+- **Automatic**: Records are instantly deleted from both S3 and the database the moment a successful retrieval/decryption completes.
+- **Manual**: Users can trigger a permanent purge at any time via the Retrieval Terminal.
 
 ### The Retrieval Flow (Unlocking)
 1. **Fetch**: The browser downloads the encrypted video and the Wrapped Key.
@@ -78,8 +84,9 @@ We use **AES-256-GCM** (Galois/Counter Mode):
 | :--- | :--- |
 | **Device Seizure** | Even if the phone is seized, the footage stays safe in the vault. The user can recover it from any other device using their Passphrase. |
 | **Server Breach** | If an attacker gains full access to our database and S3 buckets, they only see randomized garbage. They cannot derive the keys without the user's Passphrase. |
-| **Brute Force** | 100,000 PBKDF2 iterations make it computationally expensive for attackers to "guess" common passwords against a stolen database. |
+| **Brute Force** | 600,000 PBKDF2 iterations make it computationally expensive for attackers to "guess" common passwords against a stolen database. |
 | **Key Theft** | A single leaked hex key (DEK) only unlocks *one* specific video, not the entire user vault. |
+| **Data Retention** | "Burn After Reading" ensures that once the evidence is secured by the user, it no longer exists on any server. |
 
 ---
 

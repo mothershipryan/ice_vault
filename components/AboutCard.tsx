@@ -28,7 +28,7 @@ const AboutCard: React.FC = () => {
 
           <div className="space-y-4">
             <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors">
-              ICE Vault is a web application designed to serve as an immutable digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence.
+              ICE Vault is a web application designed to serve as a high-integrity digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence, while supporting "Burn After Reading" protocols to ensure zero residual data retention once evidence is secured.
             </p>
             <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors">
               We guarantee <strong>zero-knowledge privacy</strong> by leveraging <strong>German infrastructure</strong>, renowned for robust data protection laws. All data is processed by <strong>Supabase</strong> and secured via <strong>high-security European providers</strong> on servers physically located in <strong>Germany</strong>.

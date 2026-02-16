@@ -48,7 +48,14 @@ const PrivacyPolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </section>
 
                 <section className="space-y-3">
-                    <h3 className="text-blue-600 dark:text-blue-400 font-bold tracking-widest uppercase text-sm transition-colors">04. Device Independence</h3>
+                    <h3 className="text-blue-600 dark:text-blue-400 font-bold tracking-widest uppercase text-sm transition-colors">04. Ephemeral Storage (Auto-Destruct)</h3>
+                    <p>
+                        To minimize our data footprint and maximize your safety, we implement "Burn After Reading" logic. Once you successfully retrieve and decrypt a video from the vault, it is automatically and permanently purged from our database and S3 storage.
+                    </p>
+                </section>
+
+                <section className="space-y-3">
+                    <h3 className="text-blue-600 dark:text-blue-400 font-bold tracking-widest uppercase text-sm transition-colors">05. Device Independence</h3>
                     <p>
                         Because your keys are derived from your passphrase, your privacy is portable.
                         If your device is confiscated or destroyed, you can access your data from any secure terminal without relying on a local key file.
