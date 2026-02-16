@@ -4,6 +4,7 @@ import { supabase } from '../services/supabaseClient.ts';
 interface MetricsData {
     totalRecords: number;
     totalStorageBytes: number;
+    stateDistribution: { state: string; count: number }[];
     recentLogs: any[];
 }
 
@@ -20,14 +21,24 @@ const MetricsDashboard: React.FC = () => {
                 // 1. Total Records and Storage from 'videos' table
                 const { data: videos, error: vErr } = await supabase
                     .from('videos')
-                    .select('file_size');
+                    .select('file_size, state_code, blind_index_state');
 
                 if (vErr) throw vErr;
 
                 const totalRecords = videos?.length || 0;
                 const totalStorageBytes = videos?.reduce((sum, v) => sum + (v.file_size || 0), 0) || 0;
 
-                // 2. Recent activity logs
+                // 2. State Distribution
+                const stateMap: Record<string, number> = {};
+                videos?.forEach(v => {
+                    const stateLabel = v.state_code || `Encrypted (${v.blind_index_state.slice(0, 6)})`;
+                    stateMap[stateLabel] = (stateMap[stateLabel] || 0) + 1;
+                });
+                const stateDistribution = Object.entries(stateMap)
+                    .map(([state, count]) => ({ state, count }))
+                    .sort((a, b) => b.count - a.count);
+
+                // 3. Recent activity logs
                 const { data: logs, error: lErr } = await supabase
                     .from('activity_logs')
                     .select('*')
@@ -39,6 +50,7 @@ const MetricsDashboard: React.FC = () => {
                 setMetrics({
                     totalRecords,
                     totalStorageBytes,
+                    stateDistribution,
                     recentLogs: logs || [],
                 });
             } catch (err: any) {
@@ -92,6 +104,52 @@ const MetricsDashboard: React.FC = () => {
                     <p className="text-3xl font-bold text-zinc-100">{formatSize(metrics?.totalStorageBytes || 0)}</p>
                 </div>
             </div>
+
+            <section>
+                <h3 className="text-lg font-bold text-zinc-300 mb-4 flex items-center gap-2">
+                    File Distribution by State
+                </h3>
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 rounded-xl overflow-hidden backdrop-blur-sm transition-colors duration-300">
+                    {metrics?.stateDistribution.length === 0 ? (
+                        <p className="p-8 text-center text-zinc-600 italic">No record data found.</p>
+                    ) : (
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-zinc-800/50 dark:bg-zinc-900/50 text-zinc-500 font-mono text-xs uppercase">
+                                <tr>
+                                    <th className="px-6 py-3 font-medium">State</th>
+                                    <th className="px-6 py-3 font-medium">Record Count</th>
+                                    <th className="px-6 py-3 font-medium">Share</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-500/10">
+                                {metrics?.stateDistribution.map((item) => (
+                                    <tr key={item.state} className="hover:bg-red-500/5 transition-colors group">
+                                        <td className="px-6 py-4 font-bold text-zinc-300 group-hover:text-red-400">
+                                            {item.state}
+                                        </td>
+                                        <td className="px-6 py-4 text-zinc-400 font-mono">
+                                            {item.count}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-red-600 rounded-full"
+                                                        style={{ width: `${(item.count / (metrics?.totalRecords || 1)) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                                <span className="text-zinc-600 text-[10px] font-mono">
+                                                    {Math.round((item.count / (metrics?.totalRecords || 1)) * 100)}%
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </section>
 
             <section>
                 <h3 className="text-lg font-bold text-zinc-300 mb-4 flex items-center gap-2">

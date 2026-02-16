@@ -282,6 +282,7 @@ export const storageService = {
       blind_index_city: blindIndexCity,
       blind_index_date: blindIndexDate,
       encrypted_metadata: encryptedMetadata,
+      state_code: state.trim().toUpperCase(),
       s3_path: s3Path,
       encrypted_aes_key: dbKeyPayload,
       file_size: file.size,
