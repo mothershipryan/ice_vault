@@ -78,7 +78,7 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                 <div className="flex flex-col items-center gap-2 opacity-30">
                     <div className="w-1 h-1 rounded-full bg-slate-500 animate-pulse"></div>
                     <p className="text-slate-500 text-[8px] uppercase tracking-[0.4em] font-black">
-                        System Protocol 2.5.0
+                        System Protocol 1.0.0
                     </p>
                 </div>
             </div>
