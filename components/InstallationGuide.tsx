@@ -1,11 +1,16 @@
-
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface InstallationGuideProps {
   onBack: () => void;
 }
 
 const InstallationGuide: React.FC<InstallationGuideProps> = ({ onBack }) => {
+  const { t } = useTranslation();
+
+  const iosSteps = t('install.ios.steps', { returnObjects: true }) as string[];
+  const androidSteps = t('install.android.steps', { returnObjects: true }) as string[];
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-3 mb-2">
@@ -17,11 +22,13 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ onBack }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight transition-colors">HOMESCREEN INSTALLATION</h2>
+        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight transition-colors">
+          {t('install.title')}
+        </h2>
       </div>
 
       <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed transition-colors">
-        To ensure FUCK I.C.E. Vault is always accessible, even without a browser bookmark, save it directly to your device's home screen. This enables full-screen mode and faster archive access.
+        {t('install.description')}
       </p>
 
       {/* iOS Instructions */}
@@ -33,23 +40,17 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ onBack }) => {
             </svg>
           </div>
           <div>
-            <h3 className="text-slate-900 dark:text-white font-bold transition-colors">Apple iOS (Safari)</h3>
-            <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-black tracking-widest transition-colors">iPhone & iPad</p>
+            <h3 className="text-slate-900 dark:text-white font-bold transition-colors">{t('install.ios.title')}</h3>
+            <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-black tracking-widest transition-colors">{t('install.ios.subtitle')}</p>
           </div>
         </div>
         <ol className="space-y-3 text-xs text-slate-600 dark:text-slate-400 font-medium transition-colors">
-          <li className="flex gap-3">
-            <span className="text-blue-600 dark:text-blue-400 font-black transition-colors">01.</span>
-            <span>Tap the <strong>Share</strong> icon (square with an arrow pointing up) at the bottom of the screen.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-blue-600 dark:text-blue-400 font-black transition-colors">02.</span>
-            <span>Scroll down the share sheet until you find <strong>'Add to Home Screen'</strong>.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-blue-600 dark:text-blue-400 font-black transition-colors">03.</span>
-            <span>Tap <strong>'Add'</strong> in the top right corner to finalize the installation.</span>
-          </li>
+          {Array.isArray(iosSteps) && iosSteps.map((step, idx) => (
+            <li key={idx} className="flex gap-3">
+              <span className="text-blue-600 dark:text-blue-400 font-black transition-colors">{String(idx + 1).padStart(2, '0')}.</span>
+              <span dangerouslySetInnerHTML={{ __html: step.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+            </li>
+          ))}
         </ol>
       </div>
 
@@ -62,23 +63,17 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ onBack }) => {
             </svg>
           </div>
           <div>
-            <h3 className="text-slate-900 dark:text-white font-bold transition-colors">Android (Chrome)</h3>
-            <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-black tracking-widest transition-colors">Pixel, Samsung, etc.</p>
+            <h3 className="text-slate-900 dark:text-white font-bold transition-colors">{t('install.android.title')}</h3>
+            <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-black tracking-widest transition-colors">{t('install.android.subtitle')}</p>
           </div>
         </div>
         <ol className="space-y-3 text-xs text-slate-600 dark:text-slate-400 font-medium transition-colors">
-          <li className="flex gap-3">
-            <span className="text-green-600 dark:text-green-400 font-black transition-colors">01.</span>
-            <span>Tap the <strong>three vertical dots</strong> (Menu) in the top right corner of Chrome.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-green-600 dark:text-green-400 font-black transition-colors">02.</span>
-            <span>Select <strong>'Install app'</strong> or <strong>'Add to Home screen'</strong> from the menu.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-green-600 dark:text-green-400 font-black transition-colors">03.</span>
-            <span>Confirm by tapping <strong>'Install'</strong> or <strong>'Add'</strong>.</span>
-          </li>
+          {Array.isArray(androidSteps) && androidSteps.map((step, idx) => (
+            <li key={idx} className="flex gap-3">
+              <span className="text-green-600 dark:text-green-400 font-black transition-colors">{String(idx + 1).padStart(2, '0')}.</span>
+              <span dangerouslySetInnerHTML={{ __html: step.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+            </li>
+          ))}
         </ol>
       </div>
 
@@ -89,7 +84,7 @@ const InstallationGuide: React.FC<InstallationGuideProps> = ({ onBack }) => {
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        <span>Return to Vault</span>
+        <span>{t('install.return_link')}</span>
       </button>
     </div>
   );

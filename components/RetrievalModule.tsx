@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import StateSelector from './StateSelector.tsx';
 import CityInput from './CityInput.tsx';
 import DatePicker from './DatePicker.tsx';
@@ -7,6 +8,7 @@ import { UploadRecord } from '../types.ts';
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '../utils/rateLimit.ts';
 
 const RetrievalModule: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = useState('');
   const [stateName, setStateName] = useState('');
   const [city, setCity] = useState('');
@@ -20,7 +22,7 @@ const RetrievalModule: React.FC = () => {
   const handleDownload = async (rec: UploadRecord) => {
     if (!vaultKey) return;
     try {
-      setDownloadState({ id: rec.id, progress: 0, step: 'Initializing...' });
+      setDownloadState({ id: rec.id, progress: 0, step: t('retrieval.initializing') });
 
       await storageService.downloadAndDecryptVideo(
         rec,
@@ -31,29 +33,29 @@ const RetrievalModule: React.FC = () => {
       );
 
       // Auto-purge logic (Burn after reading)
-      setDownloadState({ id: rec.id, progress: 100, step: 'Purging from Vault...' });
+      setDownloadState({ id: rec.id, progress: 100, step: t('retrieval.purging') });
       await storageService.deleteRecord(rec.id, rec.s3Path, rec.isLegacy);
       setResults(prev => prev.filter(r => r.id !== rec.id));
 
       setDownloadState(null);
     } catch (err: any) {
       console.error(err);
-      alert(`Download Failed: ${err.message}`);
+      alert(t('retrieval.download_failed', { error: err.message }));
       setDownloadState(null);
     }
   };
 
   const handleDelete = async (rec: UploadRecord) => {
-    if (!window.confirm("Permanently purge this asset from the vault? This cannot be undone.")) return;
+    if (!window.confirm(t('retrieval.purge_confirm'))) return;
 
     setLoading(true);
     try {
       await storageService.deleteRecord(rec.id, rec.s3Path, rec.isLegacy);
       setResults(prev => prev.filter(r => r.id !== rec.id));
-      alert("Asset successfully purged from database and S3.");
+      alert(t('retrieval.purge_success'));
     } catch (err: any) {
       console.error(err);
-      alert(`Purge Failed: ${err.message}`);
+      alert(t('retrieval.purge_failed', { error: err.message }));
     } finally {
       setLoading(false);
     }
@@ -61,24 +63,24 @@ const RetrievalModule: React.FC = () => {
 
   const handleSearch = async () => {
     if (!vaultKey || !vaultKey.trim()) {
-      alert("Ghost Vault: You must enter a Passphrase or Backup Key to find your files.");
+      alert(t('retrieval.ghost_vault_error'));
       return;
     }
 
     // Require state and city to prevent cross-location access with same passphrase
     if (!state && !stateName) {
-      alert("Security Notice: You must select a State to retrieve files.");
+      alert(t('retrieval.security_state_error'));
       return;
     }
 
     if (!city || !city.trim()) {
-      alert("Security Notice: You must select a City to retrieve files.");
+      alert(t('retrieval.security_city_error'));
       return;
     }
 
     // Require date for complete isolation
     if (!date || !date.trim()) {
-      alert("Security Notice: You must select a Date to retrieve files.");
+      alert(t('retrieval.security_date_error'));
       return;
     }
 
@@ -104,7 +106,7 @@ const RetrievalModule: React.FC = () => {
       console.error(e);
       // Record failed attempt for rate limiting
       recordFailedAttempt();
-      alert("Search Failed. Check Browser Console for details.");
+      alert(t('retrieval.search_failed'));
     } finally {
       setLoading(false);
     }
@@ -115,13 +117,13 @@ const RetrievalModule: React.FC = () => {
       <div className="space-y-6">
         <div className="bg-white/50 dark:bg-slate-900/50 p-4 rounded-2xl border border-blue-600/20 dark:border-blue-500/20 space-y-2 transition-colors">
           <label className="text-blue-700 dark:text-blue-400 text-[10px] font-black tracking-[0.2em] uppercase px-1">
-            Passphrase or Backup Key
+            {t('retrieval.module_label')}
           </label>
           <input
             type="password"
             value={vaultKey}
             onChange={(e) => setVaultKey(e.target.value)}
-            placeholder="ENTER PASSPHRASE OR EMERGENCY KEY"
+            placeholder={t('retrieval.module_placeholder')}
             className="w-full h-[48px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 text-sm font-bold tracking-wider focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition-all uppercase placeholder:text-slate-300 dark:placeholder:text-slate-700"
           />
         </div>
@@ -131,7 +133,7 @@ const RetrievalModule: React.FC = () => {
             <div className="w-full border-t border-slate-300 dark:border-slate-800"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-slate-50 dark:bg-slate-950 px-2 text-slate-500 dark:text-slate-500 font-bold tracking-widest italic transition-colors">Target node parameters</span>
+            <span className="bg-slate-50 dark:bg-slate-950 px-2 text-slate-500 dark:text-slate-500 font-bold tracking-widest italic transition-colors">{t('retrieval.target_parameters')}</span>
           </div>
         </div>
 
@@ -153,14 +155,14 @@ const RetrievalModule: React.FC = () => {
           {loading ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-slate-400/20 dark:border-slate-900/20 border-t-white dark:border-t-slate-900 rounded-full animate-spin" />
-              <span>Scanning Nodes...</span>
+              <span>{t('retrieval.scanning')}</span>
             </div>
           ) : (
             <>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span>Search Archives</span>
+              <span>{t('retrieval.search_button')}</span>
             </>
           )}
         </button>
@@ -176,17 +178,17 @@ const RetrievalModule: React.FC = () => {
                   <p className="text-blue-700 dark:text-blue-400 text-[9px] font-black tracking-widest uppercase mt-1">ID: {rec.id}</p>
                 </div>
                 <span className="bg-green-600/10 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-[8px] font-black px-2 py-1 rounded-md border border-green-600/20 dark:border-green-500/20">
-                  VERIFIED
+                  {t('retrieval.verified')}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 py-2 border-y border-slate-200 dark:border-white/5">
                 <div>
-                  <p className="text-slate-500 uppercase font-black tracking-tighter">Status</p>
-                  <p className="text-slate-800 dark:text-slate-300 font-bold">Immutable</p>
+                  <p className="text-slate-500 uppercase font-black tracking-tighter">{t('retrieval.status_label')}</p>
+                  <p className="text-slate-800 dark:text-slate-300 font-bold">{t('retrieval.immutable')}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 uppercase font-black tracking-tighter">Encryption</p>
+                  <p className="text-slate-500 uppercase font-black tracking-tighter">{t('retrieval.encryption_label')}</p>
                   <p className="text-slate-800 dark:text-slate-300 font-bold">AES-256-GCM</p>
                 </div>
               </div>
@@ -215,7 +217,7 @@ const RetrievalModule: React.FC = () => {
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                       </svg>
-                      Decrypt & Download
+                      {t('retrieval.decrypt_download')}
                     </>
                   )}
                 </button>
@@ -224,7 +226,7 @@ const RetrievalModule: React.FC = () => {
                   onClick={() => handleDelete(rec)}
                   disabled={!!downloadState || loading}
                   className="px-4 flex items-center justify-center bg-red-600/10 dark:bg-red-500/10 hover:bg-red-600/20 dark:hover:bg-red-500/20 border border-red-600/20 dark:border-red-500/20 text-red-600 dark:text-red-400 rounded-xl transition-all"
-                  title="Purge Asset"
+                  title={t('retrieval.purge_asset')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -236,8 +238,8 @@ const RetrievalModule: React.FC = () => {
         </div>
       ) : hasSearched ? (
         <div className="p-12 text-center bg-white/30 dark:bg-slate-950/30 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 space-y-2 transition-colors">
-          <p className="text-slate-600 dark:text-slate-500 text-xs font-bold uppercase tracking-widest">No matching assets materialized.</p>
-          <p className="text-slate-500 dark:text-slate-700 text-[10px] font-medium tracking-tight">Check your passphrase. Search filters are now optional.</p>
+          <p className="text-slate-600 dark:text-slate-500 text-xs font-bold uppercase tracking-widest">{t('retrieval.no_assets')}</p>
+          <p className="text-slate-500 dark:text-slate-700 text-[10px] font-medium tracking-tight">{t('retrieval.search_hint')}</p>
         </div>
       ) : null}
     </div>

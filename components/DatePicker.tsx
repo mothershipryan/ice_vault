@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DatePickerProps {
   value: string;
@@ -7,6 +8,7 @@ interface DatePickerProps {
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) => {
+  const { t, i18n } = useTranslation();
   // Parse initial date from value string (YYYY-MM-DD) or default to today
   const initialDate = value ? new Date(value + 'T00:00:00') : new Date();
 
@@ -71,11 +73,29 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
   const startDay = startDayOfMonth(currentYear, currentMonth);
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    t('months.january', { defaultValue: 'January' }),
+    t('months.february', { defaultValue: 'February' }),
+    t('months.march', { defaultValue: 'March' }),
+    t('months.april', { defaultValue: 'April' }),
+    t('months.may', { defaultValue: 'May' }),
+    t('months.june', { defaultValue: 'June' }),
+    t('months.july', { defaultValue: 'July' }),
+    t('months.august', { defaultValue: 'August' }),
+    t('months.september', { defaultValue: 'September' }),
+    t('months.october', { defaultValue: 'October' }),
+    t('months.november', { defaultValue: 'November' }),
+    t('months.december', { defaultValue: 'December' })
   ];
 
-  const daysOfWeek = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const daysOfWeek = [
+    t('days.su', { defaultValue: 'Su' }),
+    t('days.mo', { defaultValue: 'Mo' }),
+    t('days.tu', { defaultValue: 'Tu' }),
+    t('days.we', { defaultValue: 'We' }),
+    t('days.th', { defaultValue: 'Th' }),
+    t('days.fr', { defaultValue: 'Fr' }),
+    t('days.sa', { defaultValue: 'Sa' })
+  ];
 
   // Helper to check if a specific day is the currently selected date
   const isSelected = (day: number) => {
@@ -96,13 +116,14 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
   const formattedDateValue = () => {
     if (!value) return '';
     const date = new Date(value + 'T00:00:00');
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    // Use i18n language for formatting
+    return date.toLocaleDateString(i18n.language, { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
   return (
     <div className="flex flex-col gap-2 relative" ref={containerRef}>
-      <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
-        Capture Timestamp
+      <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1 transition-colors">
+        {t('retrieval.timestamp_label')}
       </label>
 
       {/* Trigger Button */}
@@ -116,7 +137,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled }) =>
           ${disabled ? 'opacity-50 pointer-events-none' : ''}
         `}
       >
-        <span>{formattedDateValue()}</span>
+        <span className="capitalize">{formattedDateValue()}</span>
         <svg className={`w-5 h-5 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
         </svg>

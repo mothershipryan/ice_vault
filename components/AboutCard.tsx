@@ -1,13 +1,15 @@
-
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const AboutCard: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="w-full mt-10 space-y-4">
       <div className="flex items-center gap-4 justify-center mb-6">
         <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800 transition-colors"></div>
         <h2 className="text-slate-500 dark:text-slate-500 text-[9px] font-black tracking-[0.3em] uppercase transition-colors">
-          Identity Module
+          {t('app.identity_module')}
         </h2>
         <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800 transition-colors"></div>
       </div>
@@ -23,19 +25,19 @@ const AboutCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-slate-900 dark:text-white text-lg font-black tracking-tight uppercase transition-colors">About I.C.E. Vault</h3>
+            <h3 className="text-slate-900 dark:text-white text-lg font-black tracking-tight uppercase transition-colors">
+              {t('app.about_title')}
+            </h3>
           </div>
 
           <div className="space-y-4">
             <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors">
-              ICE Vault is a web application designed to serve as a high-integrity digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence, while supporting "Burn After Reading" protocols to ensure zero residual data retention once evidence is secured.
+              {t('app.about_p1')}
             </p>
-            <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors">
-              We guarantee <strong>zero-knowledge privacy</strong> by leveraging <strong>German infrastructure</strong>, renowned for robust data protection laws. All data is processed by <strong>Supabase</strong> and secured via <strong>high-security European providers</strong> on servers physically located in <strong>Germany</strong>.
-            </p>
-            <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors">
-              <strong>Retrieval Protocol:</strong> Assets can be retrieved through our <strong>European Retrieval Terminal</strong>. Use the State, City, and Date of capture to locate encrypted evidence. Each file is secured with a unique <strong>SHA-256 Hash</strong> for legal verification, ensuring the footage remains untampered, mathematically verified, and admissible as court-ready evidence.
-            </p>
+            <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors"
+              dangerouslySetInnerHTML={{ __html: t('app.about_p2').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+            <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed font-medium transition-colors"
+              dangerouslySetInnerHTML={{ __html: t('app.about_p3').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
           </div>
 
           <div className="pt-2 border-t border-slate-200 dark:border-white/5 transition-colors">
@@ -45,7 +47,9 @@ const AboutCard: React.FC = () => {
                 <div className="w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400" />
                 <div className="w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400" />
               </div>
-              <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono tracking-widest uppercase transition-colors">DE / EU PRIVACY JURISDICTION // VERIFIABLE EVIDENCE</span>
+              <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono tracking-widest uppercase transition-colors">
+                {t('app.jurisdiction_label')}
+              </span>
             </div>
           </div>
         </div>

@@ -1,5 +1,7 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import ThemeToggle from './ThemeToggle.tsx';
+import LanguageSwitcher from './LanguageSwitcher.tsx';
 
 interface FooterProps {
     onPrivacyClick: () => void;
@@ -9,6 +11,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onInstallClick, onAdminUnlock }) => {
+    const { t } = useTranslation();
     const [clickCount, setClickCount] = React.useState(0);
 
     const handleVersionClick = () => {
@@ -37,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                             </svg>
                         </div>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-100 transition-colors">
-                            Install App on Mobile
+                            {t('footer.install_mobile')}
                         </span>
                     </div>
                 </button>
@@ -60,19 +63,19 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                         href="mailto:fuckicesite@proton.me"
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
                     >
-                        Contact
+                        {t('footer.contact')}
                     </a>
                     <button
                         onClick={onPrivacyClick}
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
                     >
-                        Privacy
+                        {t('footer.privacy')}
                     </button>
                     <button
                         onClick={onCensorshipClick}
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
                     >
-                        Censorship
+                        {t('footer.censorship')}
                     </button>
                     <a
                         href="https://rddqcxfalrlmlvirjlca.supabase.co/storage/v1/object/public/logos/media-kit.pdf"
@@ -80,11 +83,12 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                         rel="noopener noreferrer"
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
                     >
-                        Stickers
+                        {t('footer.stickers')}
                     </a>
                 </div>
 
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <LanguageSwitcher />
                     <ThemeToggle />
                 </div>
 
@@ -94,7 +98,7 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                 >
                     <div className="w-1 h-1 rounded-full bg-slate-500 animate-pulse group-active:scale-150 transition-transform"></div>
                     <p className="text-slate-500 text-[8px] uppercase tracking-[0.4em] font-black select-none">
-                        System Protocol 1.0.0
+                        {t('footer.system_protocol')}
                     </p>
                 </div>
             </div>

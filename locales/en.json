@@ -1,0 +1,238 @@
+{
+    "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+    },
+    "days": {
+        "su": "Su",
+        "mo": "Mo",
+        "tu": "Tu",
+        "we": "We",
+        "th": "Th",
+        "fr": "Fr",
+        "sa": "Sa"
+    },
+    "app": {
+        "title": "FUCK I.C.E. Vault",
+        "subtitle": "SECURE STATE-INDEXED COLD VIDEO STORAGE",
+        "status": "Encryption Active",
+        "deposit": "Vault Deposit",
+        "retrieval": "Retrieval",
+        "passphrase_label": "Personal Vault Passphrase",
+        "zero_knowledge": "Zero Knowledge",
+        "passphrase_placeholder": "CREATE A SECURE PASSPHRASE",
+        "how_it_works": "How it works:",
+        "isolated_vaults": "Files are grouped by passphrase + location. You must use the same passphrase, state, city, and date to retrieve your files.",
+        "primary_method": "This is your PRIMARY retrieval method. It is NEVER sent to our servers. If you lose this, your footage can only be recovered using the Emergency Backup Key.",
+        "data_source": "Data Source",
+        "select_video": "Select Video",
+        "tap_to_scan": "Tap to scan storage",
+        "asset_loaded": "Asset Loaded",
+        "upload_to_vault": "Upload to Vault",
+        "transmission_successful": "Transmission successful.",
+        "emergency_key": "Emergency Backup Key",
+        "copied": "Copied to Clipboard",
+        "tap_to_copy": "Backup Key: Tap to Copy",
+        "emergency_warning": "⚠️ Use your passphrase for retrieval.\nThis key is for emergency use ONLY.",
+        "upload_another": "Upload another asset",
+        "exit_dashboard": "Exit Dashboard",
+        "terminal_access": "Terminal Access",
+        "enter_auth_code": "Enter Authorization Code",
+        "abort": "Abort",
+        "authorize": "Authorize",
+        "invalid_code": "Invalid Protocol Code",
+        "valid_video_error": "Please select a valid video file.",
+        "select_file_error": "Please select a file to upload.",
+        "fill_all_fields_error": "Please fill in all location and date fields.",
+        "enter_passphrase_error": "Please enter a passphrase.",
+        "weak_passphrase": "Weak passphrase.",
+        "upload_failed": "Upload failed. Please try again.",
+        "metrics_error": "Error loading metrics",
+        "metrics_title": "Vault Metrics",
+        "internal_access": "Internal Access Only",
+        "total_records": "Total Records",
+        "encrypted_storage": "Encrypted Storage",
+        "distribution_by_state": "File Distribution by State",
+        "no_records_data": "No record data found.",
+        "state": "State",
+        "record_count": "Record Count",
+        "share": "Share",
+        "recent_activity": "Recent Activity Logs",
+        "no_recent_logs": "No recent logs found.",
+        "action": "Action",
+        "description": "Description",
+        "timestamp": "Timestamp",
+        "about_title": "About I.C.E. Vault",
+        "about_p1": "ICE Vault is a web application designed to serve as a high-integrity digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence, while supporting 'Burn After Reading' protocols to ensure zero residual data retention once evidence is secured.",
+        "about_p2": "We guarantee **zero-knowledge privacy** by leveraging **German infrastructure**, renowned for robust data protection laws. All data is processed by **Supabase** and secured via **high-security European providers** on servers physically located in **Germany**.",
+        "about_p3": "**Retrieval Protocol:** Assets can be retrieved through our **European Retrieval Terminal**. Use the State, City, and Date of capture to locate encrypted evidence. Each file is secured with a unique **SHA-256 Hash** for legal verification, ensuring the footage remains untampered, mathematically verified, and admissible as court-ready evidence.",
+        "jurisdiction_label": "DE / EU PRIVACY JURISDICTION // VERIFIABLE EVIDENCE",
+        "identity_module": "Identity Module"
+    },
+    "retrieval": {
+        "module_label": "Passphrase or Backup Key",
+        "module_placeholder": "ENTER PASSPHRASE OR EMERGENCY KEY",
+        "target_parameters": "Target node parameters",
+        "scanning": "Scanning Nodes...",
+        "search_button": "Search Archives",
+        "verified": "VERIFIED",
+        "status_label": "Status",
+        "immutable": "Immutable",
+        "encryption_label": "Encryption",
+        "decrypt_download": "Decrypt & Download",
+        "purge_asset": "Purge Asset",
+        "no_assets": "No matching assets materialized.",
+        "search_hint": "Check your passphrase. Search filters are now optional.",
+        "initializing": "Initializing...",
+        "purging": "Purging from Vault...",
+        "download_failed": "Download Failed: {{error}}",
+        "purge_confirm": "Permanently purge this asset from the vault? This cannot be undone.",
+        "purge_success": "Asset successfully purged from database and S3.",
+        "purge_failed": "Purge Failed: {{error}}",
+        "ghost_vault_error": "Ghost Vault: You must enter a Passphrase or Backup Key to find your files.",
+        "security_state_error": "Security Notice: You must select a State to retrieve files.",
+        "security_city_error": "Security Notice: You must select a City to retrieve files.",
+        "security_date_error": "Security Notice: You must select a Date to retrieve files.",
+        "search_failed": "Search Failed. Check Browser Console for details.",
+        "state_label": "State",
+        "fetching_states": "Fetching States...",
+        "select_state": "Select State",
+        "city_label": "City / Municipality",
+        "enter_location": "ENTER LOCATION",
+        "select_state_first": "SELECT STATE FIRST",
+        "no_cities_found": "No matching cities found in {{state}}",
+        "timestamp_label": "Capture Timestamp"
+    },
+    "faq": {
+        "title": "FAQ",
+        "items": [
+            {
+                "q": "Why am I doing this?",
+                "a": "Ice Vault was born from a fundamental mistrust of Immigration and Customs Enforcement (ICE). History has shown a pattern of systemic abuse and the tragic, senseless deaths of innocent, hardworking individuals at the hands of state actors. When those in power operate without oversight, they often attempt to suppress evidence through intimidation or the destruction of physical devices. This platform exists to strip them of that power by ensuring every interaction is witnessed, encrypted, and stored beyond the reach of those who would seek to bury the truth."
+            },
+            {
+                "q": "How do I retrieve my footage for a court case?",
+                "a": "Switch to 'Retrieval' mode in the main terminal. You can locate your encrypted assets by searching for the State, City, and Date. To retrieve the footage, you must provide the Vault Access Key (Recovery Key) generated during your deposit. The file is decrypted locally in your browser, ensuring that our servers never see the raw video content."
+            },
+            {
+                "q": "How is my privacy guaranteed?",
+                "a": "We provide zero-knowledge privacy. This means your data is encrypted locally before it ever reaches our servers. Because our infrastructure is hosted in Germany, your data is protected by strict European data protection laws."
+            },
+            {
+                "q": "Is my footage secure?",
+                "a": "Yes. All assets are encrypted using zero-knowledge protocols. We utilize Supabase for secure data orchestration and high-security European infrastructure for storage, ensuring that only you hold the keys to your footage."
+            },
+            {
+                "q": "Where is the data physically stored?",
+                "a": "To protect against extrajudicial data requests, all ICE Vault infrastructure is hosted in Germany. This ensures your data is protected by strict German data protection laws and is handled outside the reach of US jurisdiction."
+            },
+            {
+                "q": "What happens if my phone is seized?",
+                "a": "Because ICE Vault uploads directly to our secure European Retrieval Terminal, the footage is preserved even if the physical device is destroyed or confiscated immediately after the upload completes."
+            },
+            {
+                "q": "Can I delete my uploads?",
+                "a": "Yes. You can manually purge any record using the 'Burn' icon in the Retrieval Terminal. Additionally, the vault now supports 'Burn After Reading' logic—once you successfully decrypt and save a file, it is automatically and permanently erased from the S3 storage and the database."
+            },
+            {
+                "q": "Why isn't this available on the App Store or Google Play?",
+                "a": "Centralized app stores are subject to corporate censorship and government pressure. Historically, tools that empower citizens against state actors are targeted for removal. By remaining a Progressive Web App (PWA), we ensure this protocol cannot be remotely de-platformed, wiped from your device, or suppressed by tech giants. It is built to be uncensorable and perpetually accessible."
+            }
+        ]
+    },
+    "privacy": {
+        "title": "Privacy Protocol",
+        "sections": [
+            {
+                "id": "01",
+                "title": "Zero-Knowledge Architecture",
+                "content": "Fuck-I.C.E.-Vault is built on a 'Zero-Knowledge' foundation. This means:",
+                "items": [
+                    "We do not have your encryption keys.",
+                    "We do not have your passphrase.",
+                    "We cannot view, decrypt, or access your video footage under any circumstances."
+                ]
+            },
+            {
+                "id": "02",
+                "title": "Client-Side Encryption",
+                "content": "All encryption happens locally on your device **before** any data is transmitted to our servers. Your video is transformed into randomized cryptographic noise using AES-256-GCM. The server only receives this encrypted blob."
+            },
+            {
+                "id": "03",
+                "title": "No User Tracking",
+                "content": "We do not use tracking cookies, analytics pixels, or third-party behavioral monitoring. Your interaction with the vault is private. Logs are minimized to strictly operational necessities (e.g., successful upload confirmation) and contain no personally identifiable content."
+            },
+            {
+                "id": "04",
+                "title": "Ephemeral Storage (Auto-Destruct)",
+                "content": "To minimize our data footprint and maximize your safety, we implement 'Burn After Reading' logic. Once you successfully retrieve and decrypt a video from the vault, it is automatically and permanently purged from our database and S3 storage."
+            },
+            {
+                "id": "05",
+                "title": "Device Independence",
+                "content": "Because your keys are derived from your passphrase, your privacy is portable. If your device is confiscated or destroyed, you can access your data from any secure terminal without relying on a local key file."
+            }
+        ],
+        "disclaimer_title": "Legal Disclaimer",
+        "disclaimer_text": "This tool is designed for civil rights protection. While we secure the data mathematically, users are responsible for the legal implications of recording in their specific jurisdiction."
+    },
+    "censorship": {
+        "title": "Censorship Alert",
+        "articles": [
+            {
+                "id": "01",
+                "title": "Open Letter to Tech Companies",
+                "content": "The EFF and other organizations are calling on tech companies to protect their users from lawless DHS subpoenas.",
+                "link": "Read EFF Article"
+            },
+            {
+                "id": "02",
+                "title": "DHS Anti-ICE Social Media Monitoring",
+                "content": "A recent report highlights how the DHS is monitoring social media for content critical of ICE, raising significant free speech concerns.",
+                "link": "Read NYT Article"
+            },
+            {
+                "id": "03",
+                "title": "Homeland Security Wants Names: Effector 38.3",
+                "content": "The DHS is attempting to unmask anonymous critics on social media, prompting legal challenges and privacy alarms.",
+                "link": "Read EFF Article"
+            }
+        ],
+        "notice_title": "Notice",
+        "notice_text": "We are tracking instances of digital censorship and government overreach. Stay informed and protect your digital footprint."
+    },
+    "install": {
+        "title": "HOMESCREEN INSTALLATION",
+        "description": "To ensure FUCK I.C.E. Vault is always accessible, even without a browser bookmark, save it directly to your device's home screen. This enables full-screen mode and faster archive access.",
+        "ios": {
+            "title": "Apple iOS (Safari)",
+            "subtitle": "iPhone & iPad",
+            "steps": [
+                "Tap the **Share** icon (square with an arrow pointing up) at the bottom of the screen.",
+                "Scroll down the share sheet until you find **'Add to Home Screen'**.",
+                "Tap **'Add'** in the top right corner to finalize the installation."
+            ]
+        },
+        "android": {
+            "title": "Android (Chrome)",
+            "subtitle": "Pixel, Samsung, etc.",
+            "steps": [
+                "Tap the **three vertical dots** (Menu) in the top right corner of Chrome.",
+                "Select **'Install app'** or **'Add to Home screen'** from the menu.",
+                "Confirm by tapping **'Install'** or **'Add'**."
+            ]
+        },
+        "return_link": "Return to Vault"
+    }
+}

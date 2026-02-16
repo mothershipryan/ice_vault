@@ -1,5 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabaseClient.ts';
 
 interface StateSelectorProps {
@@ -37,6 +37,7 @@ const FALLBACK_STATES = [
 ];
 
 const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled }) => {
+  const { t } = useTranslation();
   const [states, setStates] = useState<{ name: string; state_code: string }[]>(FALLBACK_STATES);
   const [loading, setLoading] = useState(false);
 
@@ -71,8 +72,8 @@ const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">
-        State
+      <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1 transition-colors">
+        {t('retrieval.state_label')}
       </label>
       <div className="relative">
         <select
@@ -87,7 +88,7 @@ const StateSelector: React.FC<StateSelectorProps> = ({ value, onChange, disabled
           className="w-full h-[64px] bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 appearance-none focus:outline-none focus:ring-4 focus:ring-blue-600/10 dark:focus:ring-blue-500/10 focus:border-blue-600 dark:focus:border-blue-500 transition-all disabled:opacity-50 text-sm font-bold shadow-sm"
         >
           <option value="" disabled className="bg-white dark:bg-slate-900 text-slate-500">
-            {loading && states.length === 0 ? 'Fetching States...' : 'Select State'}
+            {loading && states.length === 0 ? t('retrieval.fetching_states') : t('retrieval.select_state')}
           </option>
           {states.map((state) => (
             <option key={state.state_code} value={state.state_code} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">

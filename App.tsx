@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from './services/supabaseClient.ts';
 import StateSelector from './components/StateSelector.tsx';
 import CityInput from './components/CityInput.tsx';
@@ -18,6 +19,7 @@ import { AppStatus, ViewMode } from './types.ts';
 import { validatePassphraseStrength, PassphraseStrength } from './utils/passphraseValidation.ts';
 
 const App: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DEPOSIT);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -88,7 +90,7 @@ const App: React.FC = () => {
         setFile(selectedFile);
         setError(null);
       } else {
-        setError('Please select a valid video file.');
+        setError(t('app.valid_video_error'));
         setFile(null);
       }
     }
@@ -96,24 +98,24 @@ const App: React.FC = () => {
 
   const handleUpload = async () => {
     if (!file) {
-      setError('Please select a file to upload.');
+      setError(t('app.select_file_error'));
       return;
     }
 
     if (!selectedState || !selectedCity || !selectedDate) {
-      setError('Please fill in all location and date fields.');
+      setError(t('app.fill_all_fields_error'));
       return;
     }
 
     if (!passphrase || !passphrase.trim()) {
-      setError('Please enter a passphrase.');
+      setError(t('app.enter_passphrase_error'));
       return;
     }
 
     // Check passphrase strength
     const strength = validatePassphraseStrength(passphrase);
     if (!strength.valid) {
-      setError(`Weak passphrase. ${strength.message}`);
+      setError(`${t('app.weak_passphrase')} ${strength.message}`);
       return;
     }
 
@@ -190,15 +192,15 @@ const App: React.FC = () => {
           <div className="text-center mb-10 space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 dark:bg-blue-500/10 dark:border-blue-400/20">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
-              <span className="text-blue-700 dark:text-blue-300 text-[10px] font-bold tracking-widest uppercase">Encryption Active</span>
+              <span className="text-blue-700 dark:text-blue-300 text-[10px] font-bold tracking-widest uppercase">{t('app.status')}</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-[0.9]">
-              FUCK I.C.E.<br />
-              <span className="text-blue-600 dark:text-blue-400">Vault</span>
+              {t('app.title').split(' ')[0]} {t('app.title').split(' ')[1]} {t('app.title').split(' ')[2]}<br />
+              <span className="text-blue-600 dark:text-blue-400">{t('app.title').split(' ')[3]}</span>
             </h1>
             <div className="space-y-4">
               <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
-                SECURE STATE-INDEXED COLD VIDEO STORAGE
+                {t('app.subtitle')}
               </p>
             </div>
           </div>
@@ -211,13 +213,13 @@ const App: React.FC = () => {
               onClick={() => setViewMode(ViewMode.DEPOSIT)}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === ViewMode.DEPOSIT ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
-              Vault Deposit
+              {t('app.deposit')}
             </button>
             <button
               onClick={() => setViewMode(ViewMode.RETRIEVAL)}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === ViewMode.RETRIEVAL ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
-              Retrieval
+              {t('app.retrieval')}
             </button>
           </div>
         )}
@@ -229,7 +231,7 @@ const App: React.FC = () => {
               {status === AppStatus.SUCCESS && (
                 <div className="space-y-4">
                   <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-2xl text-center">
-                    <p className="text-green-400 text-sm font-bold">Transmission successful.</p>
+                    <p className="text-green-400 text-sm font-bold">{t('app.transmission_successful')}</p>
                   </div>
 
                   {recoveryKey && (
@@ -238,7 +240,7 @@ const App: React.FC = () => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
-                        <span className="text-xs font-black uppercase tracking-widest text-red-400">Emergency Backup Key</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-red-400">{t('app.emergency_key')}</span>
                       </div>
                       <div
                         onClick={handleCopyKey}
@@ -265,11 +267,11 @@ const App: React.FC = () => {
                             : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
                             }`}
                         >
-                          {copied ? 'Copied to Clipboard' : 'Backup Key: Tap to Copy'}
+                          {copied ? t('app.copied') : t('app.tap_to_copy')}
                         </button>
                       </div>
                       <p className="text-center text-[10px] text-red-600 dark:text-red-500/80 font-bold uppercase tracking-wide opacity-80 pt-2">
-                        ⚠️ Use your passphrase for retrieval.<br />This key is for emergency use ONLY.
+                        {t('app.emergency_warning').split('\n')[0]}<br />{t('app.emergency_warning').split('\n')[1]}
                       </p>
                     </div>
                   )}
@@ -279,7 +281,7 @@ const App: React.FC = () => {
                       onClick={reset}
                       className="mt-1 text-xs text-green-600 dark:text-green-300/80 font-bold underline underline-offset-4"
                     >
-                      Upload another asset
+                      {t('app.upload_another')}
                     </button>
                   </div>
                 </div>
@@ -319,16 +321,16 @@ const App: React.FC = () => {
                 <div className="bg-slate-100/50 dark:bg-slate-900/50 p-5 rounded-[1.75rem] border border-blue-500/20 dark:border-blue-500/20 space-y-3 transition-colors">
                   <div className="flex justify-between items-center px-1">
                     <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-black tracking-[0.2em] uppercase">
-                      Personal Vault Passphrase
+                      {t('app.passphrase_label')}
                     </label>
-                    <span className="text-[9px] text-blue-600 dark:text-blue-400/60 font-black uppercase tracking-widest bg-blue-600/5 dark:bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-600/10 dark:border-blue-500/10">Zero Knowledge</span>
+                    <span className="text-[9px] text-blue-600 dark:text-blue-400/60 font-black uppercase tracking-widest bg-blue-600/5 dark:bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-600/10 dark:border-blue-500/10">{t('app.zero_knowledge')}</span>
                   </div>
 
                   <input
                     type="password"
                     value={passphrase}
                     onChange={(e) => setPassphrase(e.target.value)}
-                    placeholder="CREATE A SECURE PASSPHRASE"
+                    placeholder={t('app.passphrase_placeholder')}
                     disabled={status === AppStatus.UPLOADING}
                     className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest"
                   />
@@ -353,15 +355,15 @@ const App: React.FC = () => {
                   )}
 
                   <div className="bg-blue-600/5 dark:bg-blue-500/5 border border-blue-600/10 dark:border-blue-500/10 rounded-lg p-3 space-y-1.5">
-                    <p className="text-[10px] text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wide">How it works:</p>
+                    <p className="text-[10px] text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wide">{t('app.how_it_works')}</p>
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Files are grouped by <span className="text-blue-700 dark:text-blue-300 font-semibold">passphrase + location</span>. You must use the same passphrase, state, city, and date to retrieve your files.
+                      {t('app.isolated_vaults')}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">Data Source</label>
+                  <label className="text-blue-900/40 dark:text-blue-200/40 text-[10px] font-bold tracking-[0.2em] uppercase px-1">{t('app.data_source')}</label>
                   <div className={`relative h-48 border-2 border-dashed rounded-[1.75rem] transition-all flex flex-col items-center justify-center p-6 text-center
                     ${file ? 'border-blue-600 dark:border-blue-400 bg-blue-600/5 dark:bg-blue-500/10' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80'}
                     ${status === AppStatus.UPLOADING ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -373,11 +375,11 @@ const App: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
-                        <p className="text-slate-800 dark:text-slate-200 text-sm font-bold">Select Video</p>
+                        <p className="text-slate-800 dark:text-slate-200 text-sm font-bold">{t('app.select_video')}</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">Asset Loaded</p>
+                        <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-1">{t('app.asset_loaded')}</p>
                         <p className="text-slate-600 dark:text-slate-400 text-[11px] font-medium truncate max-w-[200px]">{file.name}</p>
                       </div>
                     )}
@@ -405,7 +407,7 @@ const App: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <span>Upload to Vault</span>
+                      <span>{t('app.upload_to_vault')}</span>
                       <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
@@ -431,7 +433,7 @@ const App: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Exit Dashboard
+              {t('app.exit_dashboard')}
             </button>
             <MetricsDashboard />
           </div>
@@ -464,8 +466,8 @@ const App: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-sm">Terminal Access</h3>
-                <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mt-1">Enter Authorization Code</p>
+                <h3 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-sm">{t('app.terminal_access')}</h3>
+                <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mt-1">{t('app.enter_auth_code')}</p>
               </div>
 
               <div className="relative">
@@ -480,7 +482,7 @@ const App: React.FC = () => {
                   placeholder="••••"
                 />
                 {pinError && (
-                  <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase animate-in fade-in duration-300">Invalid Protocol Code</p>
+                  <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase animate-in fade-in duration-300">{t('app.invalid_code')}</p>
                 )}
               </div>
 
@@ -489,13 +491,13 @@ const App: React.FC = () => {
                   onClick={() => setShowPinModal(false)}
                   className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                 >
-                  Abort
+                  {t('app.abort')}
                 </button>
                 <button
                   onClick={handlePinSubmit}
                   className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-600 text-white shadow-lg shadow-red-500/20 active:scale-95 transition-all"
                 >
-                  Authorize
+                  {t('app.authorize')}
                 </button>
               </div>
             </div>

@@ -1,43 +1,12 @@
-
 import React, { useState } from 'react';
-
-const FAQ_ITEMS = [
-  {
-    q: "Why am I doing this?",
-    a: "Ice Vault was born from a fundamental mistrust of Immigration and Customs Enforcement (ICE). History has shown a pattern of systemic abuse and the tragic, senseless deaths of innocent, hardworking individuals at the hands of state actors. When those in power operate without oversight, they often attempt to suppress evidence through intimidation or the destruction of physical devices. This platform exists to strip them of that power by ensuring every interaction is witnessed, encrypted, and stored beyond the reach of those who would seek to bury the truth."
-  },
-  {
-    q: "How do I retrieve my footage for a court case?",
-    a: "Switch to 'Retrieval' mode in the main terminal. You can locate your encrypted assets by searching for the State, City, and Date. To retrieve the footage, you must provide the Vault Access Key (Recovery Key) generated during your deposit. The file is decrypted locally in your browser, ensuring that our servers never see the raw video content."
-  },
-  {
-    q: "How is my privacy guaranteed?",
-    a: "We provide zero-knowledge privacy. This means your data is encrypted locally before it ever reaches our servers. Because our infrastructure is hosted in Germany, your data is protected by strict European data protection laws."
-  },
-  {
-    q: "Is my footage secure?",
-    a: "Yes. All assets are encrypted using zero-knowledge protocols. We utilize Supabase for secure data orchestration and high-security European infrastructure for storage, ensuring that only you hold the keys to your footage."
-  },
-  {
-    q: "Where is the data physically stored?",
-    a: "To protect against extrajudicial data requests, all ICE Vault infrastructure is hosted in Germany. This ensures your data is protected by strict German data protection laws and is handled outside the reach of US jurisdiction."
-  },
-  {
-    q: "What happens if my phone is seized?",
-    a: "Because ICE Vault uploads directly to our secure European Retrieval Terminal, the footage is preserved even if the physical device is destroyed or confiscated immediately after the upload completes."
-  },
-  {
-    q: "Can I delete my uploads?",
-    a: "Yes. You can manually purge any record using the 'Burn' icon in the Retrieval Terminal. Additionally, the vault now supports 'Burn After Reading' logic—once you successfully decrypt and save a file, it is automatically and permanently erased from the S3 storage and the database."
-  },
-  {
-    q: "Why isn't this available on the App Store or Google Play?",
-    a: "Centralized app stores are subject to corporate censorship and government pressure. Historically, tools that empower citizens against state actors are targeted for removal. By remaining a Progressive Web App (PWA), we ensure this protocol cannot be remotely de-platformed, wiped from your device, or suppressed by tech giants. It is built to be uncensorable and perpetually accessible."
-  }
-];
+import { useTranslation } from 'react-i18next';
 
 const FAQ: React.FC = () => {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  // Load translated FAQ items. Use type assertion for returnObjects.
+  const faqItems = t('faq.items', { returnObjects: true }) as Array<{ q: string, a: string }>;
 
   const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -48,12 +17,12 @@ const FAQ: React.FC = () => {
       <div className="flex items-center gap-4 justify-center mb-6">
         <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800 transition-colors"></div>
         <h2 className="text-slate-500 dark:text-slate-500 text-[9px] font-black tracking-[0.3em] uppercase transition-colors">
-          FAQ
+          {t('faq.title')}
         </h2>
         <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800 transition-colors"></div>
       </div>
 
-      {FAQ_ITEMS.map((item, idx) => (
+      {Array.isArray(faqItems) && faqItems.map((item, idx) => (
         <div
           key={idx}
           className="bg-white/50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm transition-colors"
@@ -76,7 +45,7 @@ const FAQ: React.FC = () => {
           </button>
 
           <div
-            className={`transition-all duration-300 ease-in-out ${openIndex === idx ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}
+            className={`transition-all duration-300 ease-in-out ${openIndex === idx ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
           >
             <p className="px-5 pb-5 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400 font-medium border-t border-slate-100 dark:border-white/5 pt-4 transition-colors">
               {item.a}

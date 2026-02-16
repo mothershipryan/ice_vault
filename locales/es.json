@@ -1,0 +1,238 @@
+{
+    "months": {
+        "january": "Enero",
+        "february": "Febrero",
+        "march": "Marzo",
+        "april": "Abril",
+        "may": "Mayo",
+        "june": "Junio",
+        "july": "Julio",
+        "august": "Agosto",
+        "september": "Septiembre",
+        "october": "Octubre",
+        "november": "Noviembre",
+        "december": "Diciembre"
+    },
+    "days": {
+        "su": "Do",
+        "mo": "Lu",
+        "tu": "Ma",
+        "we": "Mi",
+        "th": "Ju",
+        "fr": "Vi",
+        "sa": "Sá"
+    },
+    "app": {
+        "title": "FUCK I.C.E. Vault",
+        "subtitle": "ALMACENAMIENTO DE VIDEO SEGURO INDEXADO POR ESTADO",
+        "status": "Cifrado Activo",
+        "deposit": "Depósito en la Bóveda",
+        "retrieval": "Recuperación",
+        "passphrase_label": "Frase de Seguridad Personal",
+        "zero_knowledge": "Conocimiento Cero",
+        "passphrase_placeholder": "CREA UNA FRASE DE SEGURIDAD SEGURA",
+        "how_it_works": "Cómo funciona:",
+        "isolated_vaults": "Los archivos se agrupan por frase de seguridad + ubicación. Debe usar la misma frase, estado, ciudad y fecha para recuperarlos.",
+        "primary_method": "Este es su método de recuperación PRINCIPAL. NUNCA se envía a nuestros servidores. Si lo pierde, su video solo podrá recuperarse con la Llave de Respaldo de Emergencia.",
+        "data_source": "Fuente de Datos",
+        "select_video": "Seleccionar Video",
+        "tap_to_scan": "Toque para escanear el almacenamiento",
+        "asset_loaded": "Archivo Cargado",
+        "upload_to_vault": "Subir a la Bóveda",
+        "transmission_successful": "Transmisión exitosa.",
+        "emergency_key": "Llave de Respaldo de Emergencia",
+        "copied": "Copiado al Portapapeles",
+        "tap_to_copy": "Llave de Respaldo: Toque para copiar",
+        "emergency_warning": "⚠️ Use su frase de seguridad para la recuperación.\nEsta llave es SOLO para emergencias.",
+        "upload_another": "Subir otro archivo",
+        "exit_dashboard": "Salir del Panel",
+        "terminal_access": "Acceso a la Terminal",
+        "enter_auth_code": "Ingrese el Código de Autorización",
+        "abort": "Abortar",
+        "authorize": "Autorizar",
+        "invalid_code": "Código de Protocolo Inválido",
+        "valid_video_error": "Por favor seleccione un archivo de video válido.",
+        "select_file_error": "Por favor seleccione un archivo para cargar.",
+        "fill_all_fields_error": "Por favor complete todos los campos de ubicación y fecha.",
+        "enter_passphrase_error": "Por favor ingrese una frase de seguridad.",
+        "weak_passphrase": "Frase de seguridad débil.",
+        "upload_failed": "Carga fallida. Por favor intente de nuevo.",
+        "metrics_error": "Error al cargar métricas",
+        "metrics_title": "Métricas de la Bóveda",
+        "internal_access": "Solo Acceso Interno",
+        "total_records": "Registros Totales",
+        "encrypted_storage": "Almacenamiento Cifrado",
+        "distribution_by_state": "Distribución de Archivos por Estado",
+        "no_records_data": "No se encontraron datos de registros.",
+        "state": "Estado",
+        "record_count": "Cantidad de Registros",
+        "share": "Participación",
+        "recent_activity": "Registros de Actividad Reciente",
+        "no_recent_logs": "No se encontraron registros recientes.",
+        "action": "Acción",
+        "description": "Descripción",
+        "timestamp": "Marca de Tiempo",
+        "about_title": "Acerca de I.C.E. Vault",
+        "about_p1": "ICE Vault es una aplicación web diseñada para servir como un testigo digital de alta integridad. Al proporcionar la carga directa a la nube para grabaciones de video, la aplicación asegura que el video crítico sea capturado y asegurado al instante. Esta arquitectura está construida específicamente para prevenir la pérdida local o la destrucción física de la evidencia, mientras admite protocolos de 'Quemar después de Leer' para asegurar que no haya retención de datos residuales una vez que la evidencia esté asegurada.",
+        "about_p2": "Garantizamos la **privacidad de conocimiento cero** aprovechando la **infraestructura alemana**, reconocida por sus robustas leyes de protección de datos. Todos los datos son procesados por **Supabase** y asegurados a través de **proveedores europeos de alta seguridad** en servidores ubicados físicamente en **Alemania**.",
+        "about_p3": "**Protocolo de Recuperación:** Los archivos pueden ser recuperados a través de nuestra **Terminal de Recuperación Europea**. Use el Estado, Ciudad y Fecha de captura para localizar la evidencia cifrada. Cada archivo está asegurado con un **Hash SHA-256** único para verificación legal, asegurando que el video permanezca inalterado, verificado matemáticamente y sea admisible como evidencia lista para los tribunales.",
+        "jurisdiction_label": "JURISDICCIÓN DE PRIVACIDAD DE DE / UE // EVIDENCIA VERIFICABLE",
+        "identity_module": "Módulo de Identidad"
+    },
+    "retrieval": {
+        "module_label": "Frase de Seguridad o Llave de Respaldo",
+        "module_placeholder": "INGRESE FRASE O LLAVE DE EMERGENCIA",
+        "target_parameters": "Parámetros del nodo objetivo",
+        "scanning": "Escaneando Nodos...",
+        "search_button": "Buscar en Archivos",
+        "verified": "VERIFICADO",
+        "status_label": "Estado",
+        "immutable": "Inmutable",
+        "encryption_label": "Cifrado",
+        "decrypt_download": "Descifrar y Descargar",
+        "purge_asset": "Purgar Archivo",
+        "no_assets": "No se materializaron archivos coincidentes.",
+        "search_hint": "Verifique su frase de seguridad. Los filtros de búsqueda ahora son opcionales.",
+        "initializing": "Inicializando...",
+        "purging": "Purgando de la Bóveda...",
+        "download_failed": "Descarga Fallida: {{error}}",
+        "purge_confirm": "¿Purgar permanentemente este archivo de la bóveda? Esto no se puede deshacer.",
+        "purge_success": "Archivo purgado con éxito de la base de datos y S3.",
+        "purge_failed": "Purga Fallida: {{error}}",
+        "ghost_vault_error": "Bóveda Fantasma: Debe ingresar una Frase de Seguridad o Llave de Respaldo para encontrar sus archivos.",
+        "security_state_error": "Aviso de Seguridad: Debe seleccionar un Estado para recuperar archivos.",
+        "security_city_error": "Aviso de Seguridad: Debe seleccionar una Ciudad para recuperar archivos.",
+        "security_date_error": "Aviso de Seguridad: Debe seleccionar una Fecha para recuperar archivos.",
+        "search_failed": "Búsqueda Fallida. Verifique la consola del navegador para más detalles.",
+        "state_label": "Estado",
+        "fetching_states": "Buscando Estados...",
+        "select_state": "Seleccionar Estado",
+        "city_label": "Ciudad / Municipio",
+        "enter_location": "INGRESAR UBICACIÓN",
+        "select_state_first": "SELECCIONAR ESTADO PRIMERO",
+        "no_cities_found": "No se encontraron ciudades coincidentes en {{state}}",
+        "timestamp_label": "Fecha de Captura"
+    },
+    "faq": {
+        "title": "Preguntas Frecuentes",
+        "items": [
+            {
+                "q": "¿Por qué estoy haciendo esto?",
+                "a": "Ice Vault nació de una desconfianza fundamental hacia el Servicio de Inmigración y Control de Aduanas (ICE). La historia ha mostrado un patrón de abuso sistémico y las trágicas muertes sin sentido de personas inocentes y trabajadoras a manos de actores estatales. Cuando quienes tienen el poder operan sin supervisión, a menudo intentan suprimir la evidencia mediante la intimidación o la destrucción de dispositivos físicos. Esta plataforma existe para quitarles ese poder al asegurar que cada interacción sea presenciada, cifrada y almacenada fuera del alcance de quienes buscan enterrar la verdad."
+            },
+            {
+                "q": "¿Cómo recupero mi video para un caso judicial?",
+                "a": "Cambie al modo 'Recuperación' en la terminal principal. Puede localizar sus archivos cifrados buscando por Estado, Ciudad y Fecha. Para recuperar el video, debe proporcionar la Llave de Acceso a la Bóveda (Llave de Recuperación) generada durante su depósito. El archivo se descifra localmente en su navegador, asegurando que nuestros servidores nunca vean el contenido de video original."
+            },
+            {
+                "q": "¿Cómo se garantiza mi privacidad?",
+                "a": "Ofrecemos privacidad de conocimiento cero. Esto significa que sus datos se cifran localmente antes de llegar a nuestros servidores. Debido a que nuestra infraestructura está alojada en Alemania, sus datos están protegidos por estrictas leyes europeas de protección de datos."
+            },
+            {
+                "q": "¿Es mi video seguro?",
+                "a": "Sí. Todos los archivos están cifrados mediante protocolos de conocimiento cero. Utilizamos Supabase para la orquestación segura de datos e infraestructura europea de alta seguridad para el almacenamiento, asegurando que solo usted tenga las llaves de sus videos."
+            },
+            {
+                "q": "¿Dónde se almacenan físicamente los datos?",
+                "a": "Para proteger contra solicitudes de datos extrajudiciales, toda la infraestructura de ICE Vault está alojada en Alemania. Esto asegura que sus datos estén protegidos por estrictas leyes alemanas de protección de datos y se manejen fuera del alcance de la jurisdicción de los EE. UU."
+            },
+            {
+                "q": "¿Qué pasa si confiscan mi teléfono?",
+                "a": "Debido a que ICE Vault sube directamente a nuestra Terminal de Recuperación Europea segura, el video se conserva incluso si el dispositivo físico es destruido o confiscado inmediatamente después de que se completa la carga."
+            },
+            {
+                "q": "¿Puedo eliminar mis cargas?",
+                "a": "Sí. Puede purgar manualmente cualquier registro usando el icono 'Quemar' en la Terminal de Recuperación. Además, la bóveda ahora admite la lógica de 'Quemar después de Leer': una vez que descifra y guarda exitosamente un archivo, se borra automática y permanentemente del almacenamiento S3 y de la base de datos."
+            },
+            {
+                "q": "¿Por qué esto no está disponible en la App Store o Google Play?",
+                "a": "Las tiendas de aplicaciones centralizadas están sujetas a la censura corporativa y a la presión gubernamental. Históricamente, las herramientas que empoderan a los ciudadanos contra actores estatales son blanco de eliminación. Al seguir siendo una Aplicación Web Progresiva (PWA), aseguramos que este protocolo no pueda ser desactivado remotamente, borrado de su dispositivo o suprimido por gigantes tecnológicos. Está construido para ser incensurable y perpetuamente accesible."
+            }
+        ]
+    },
+    "privacy": {
+        "title": "Protocolo de Privacidad",
+        "sections": [
+            {
+                "id": "01",
+                "title": "Arquitectura de Conocimiento Cero",
+                "content": "Fuck-I.C.E.-Vault está construido sobre una base de 'Conocimiento Cero'. Esto significa:",
+                "items": [
+                    "No tenemos sus llaves de cifrado.",
+                    "No tenemos su frase de seguridad.",
+                    "No podemos ver, descifrar ni acceder a sus videos bajo ninguna circunstancia."
+                ]
+            },
+            {
+                "id": "02",
+                "title": "Cifrado del Lado del Cliente",
+                "content": "Todo el cifrado ocurre localmente en su dispositivo **antes** de que cualquier dato sea transmitido a nuestros servidores. Su video se transforma en ruido criptográfico aleatorio usando AES-256-GCM. El servidor solo recibe este bloque cifrado."
+            },
+            {
+                "id": "03",
+                "title": "Sin Seguimiento de Usuarios",
+                "content": "No utilizamos cookies de seguimiento, píxeles de análisis ni monitoreo de comportamiento de terceros. Su interacción con la bóveda es privada. Los registros se minimizan a necesidades estrictamente operativas (ej. confirmación de carga exitosa) y no contienen contenido de identificación personal."
+            },
+            {
+                "id": "04",
+                "title": "Almacenamiento Efímero (Autodestrucción)",
+                "content": "Para minimizar nuestra huella de datos y maximizar su seguridad, implementamos la lógica de 'Quemar después de Leer'. Una vez que recupera y descifra con éxito un video de la bóveda, se purga automática y permanentemente de nuestra base de datos y almacenamiento S3."
+            },
+            {
+                "id": "05",
+                "title": "Independencia del Dispositivo",
+                "content": "Debido a que sus llaves se derivan de su frase de seguridad, su privacidad es portátil. Si su dispositivo es confiscado o destruido, puede acceder a sus datos desde cualquier terminal segura sin depender de un archivo de llaves local."
+            }
+        ],
+        "disclaimer_title": "Aviso Legal",
+        "disclaimer_text": "Esta herramienta está diseñada para la protección de los derechos civiles. Aunque aseguramos los datos matemáticamente, los usuarios son responsables de las implicaciones legales de grabar en su jurisdicción específica."
+    },
+    "censorship": {
+        "title": "Alerta de Censura",
+        "articles": [
+            {
+                "id": "01",
+                "title": "Carta Abierta a las Compañías Tecnológicas",
+                "content": "La EFF y otras organizaciones están pidiendo a las compañías tecnológicas que protejan a sus usuarios de las citaciones ilegales de DHS.",
+                "link": "Leer Artículo de EFF"
+            },
+            {
+                "id": "02",
+                "title": "Monitoreo de Redes Sociales por Parte de DHS",
+                "content": "Un informe reciente resalta cómo la DHS está monitoreando redes sociales por contenido crítico de ICE, planteando preocupaciones significativas sobre la libertad de expresión.",
+                "link": "Leer Artículo de NYT"
+            },
+            {
+                "id": "03",
+                "title": "Seguridad Nacional Quiere Nombres: Effector 38.3",
+                "content": "DHS está intentando desenmascarar a críticos anónimos en redes sociales, lo que ha provocado desafíos legales y alarmas de privacidad.",
+                "link": "Leer Artículo de EFF"
+            }
+        ],
+        "notice_title": "Aviso",
+        "notice_text": "Estamos rastreando casos de censura digital y extralimitación gubernamental. Manténgase informado y proteja su huella digital."
+    },
+    "install": {
+        "title": "INSTALACIÓN EN PANTALLA DE INICIO",
+        "description": "Para asegurar que FUCK I.C.E. Vault esté siempre accesible, incluso sin un marcador en el navegador, guárdelo directamente en la pantalla de inicio de su dispositivo. Esto activa el modo de pantalla completa y un acceso más rápido.",
+        "ios": {
+            "title": "Apple iOS (Safari)",
+            "subtitle": "iPhone y iPad",
+            "steps": [
+                "Toque el icono de **Compartir** (cuadrado con una flecha hacia arriba) en la parte inferior de la pantalla.",
+                "Deslice hacia abajo hasta encontrar **'Agregar a la pantalla de inicio'**.",
+                "Toque **'Agregar'** en la esquina superior derecha para finalizar la instalación."
+            ]
+        },
+        "android": {
+            "title": "Android (Chrome)",
+            "subtitle": "Pixel, Samsung, etc.",
+            "steps": [
+                "Toque los **tres puntos verticales** (Menú) en la esquina superior derecha de Chrome.",
+                "Seleccione **'Instalar aplicación'** o **'Agregar a la pantalla de inicio'**.",
+                "Confirme tocando **'Instalar'** o **'Agregar'**."
+            ]
+        },
+        "return_link": "Volver a la Bóveda"
+    }
+}
