@@ -13,6 +13,7 @@ import PrivacyPolicy from './components/PrivacyPolicy.tsx';
 import Censorship from './components/Censorship.tsx';
 import Footer from './components/Footer.tsx';
 import MetricsDashboard from './components/MetricsDashboard.tsx';
+import LanguageSwitcher from './components/LanguageSwitcher.tsx';
 import { storageService } from './services/storageService.ts';
 import { BACKGROUND_URL } from './constants.ts';
 import { AppStatus, ViewMode } from './types.ts';
@@ -202,6 +203,9 @@ const App: React.FC = () => {
               <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm font-medium tracking-wide max-w-[300px] mx-auto opacity-80">
                 {t('app.subtitle')}
               </p>
+              <div className="flex justify-center pt-2">
+                <LanguageSwitcher />
+              </div>
             </div>
           </div>
         )}
