@@ -9,8 +9,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Supabase credentials missing. Check your environment variables.');
 }
 
-export const supabase = createClient(
-    supabaseUrl || '',
-    supabaseAnonKey || ''
-);
+export const supabase = (supabaseUrl && supabaseAnonKey)
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null as any;
+
+if (!supabase) {
+    console.error('CRITICAL: Supabase client could not be initialized. Check environment variables.');
+}
 
