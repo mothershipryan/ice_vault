@@ -9,11 +9,16 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function inspect() {
     console.log(`Checking ${supabaseUrl}...`);
 
-    // Try counting as a basic probe
+    // Try standard select as a basic probe
     console.log("--- PROBING VIDEOS ---");
-    const { count, error: vErr } = await supabase.from('videos').select('*', { count: 'exact', head: true });
-    if (vErr) console.error("Videos Probe Error:", vErr);
-    else console.log("Videos count:", count);
+    const { data: vData, error: vErr } = await supabase.from('videos').select('*').limit(1);
+    if (vErr) console.error("Videos Probe Error:", JSON.stringify(vErr, null, 2));
+    else console.log("Videos Probe Success (Table exists)");
+
+    console.log("\n--- PROBING ACTIVITY_LOGS ---");
+    const { data: aData, error: aErr } = await supabase.from('activity_logs').select('*').limit(1);
+    if (aErr) console.error("Activity Logs Probe Error:", JSON.stringify(aErr, null, 2));
+    else console.log("Activity Logs Probe Success (Table exists)");
 
     console.log("\n--- LISTING RECORDS ---");
     const { data: videos } = await supabase.from('videos').select('id, user_id, s3_path').limit(2);
@@ -21,7 +26,7 @@ async function inspect() {
 
     console.log("\n--- BUCKETS ---");
     const { data: buckets, error: bErr } = await supabase.storage.listBuckets();
-    if (bErr) console.error("Buckets Error:", bErr);
+    if (bErr) console.error("Buckets Error:", JSON.stringify(bErr, null, 2));
     else console.log("Buckets:", JSON.stringify(buckets.map(b => b.name), null, 2));
 }
 

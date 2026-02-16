@@ -108,6 +108,30 @@ export default async function handler(req: Request) {
                 result = { url };
                 break;
 
+            case 'delete_object':
+                // Payload: { key }
+                // @ts-ignore
+                const { S3Client: S3Del, DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+
+                const deleteClient = new S3Del({
+                    region: process.env.VITE_S3_REGION,
+                    endpoint: process.env.VITE_S3_ENDPOINT,
+                    credentials: {
+                        accessKeyId: process.env.HETZNER_S3_ACCESS_KEY_ID!,
+                        secretAccessKey: process.env.HETZNER_S3_SECRET_ACCESS_KEY!,
+                    },
+                    forcePathStyle: true,
+                });
+
+                const deleteCommand = new DeleteObjectCommand({
+                    Bucket: 'fuckicevault',
+                    Key: payload.key,
+                });
+
+                await deleteClient.send(deleteCommand);
+                result = { success: true };
+                break;
+
             default:
                 return new Response(JSON.stringify({ error: 'Invalid Action' }), { status: 400 });
         }

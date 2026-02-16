@@ -248,8 +248,32 @@ export const storageService = {
     const s3Path = `${derivedUserId}/${state.toLowerCase()}/${city.toLowerCase()}/${window.crypto.randomUUID()}.enc`;
 
     onProgress(75);
-    const { error: uploadError } = await supabase.storage.from(bucketName).upload(s3Path, encryptedBlob);
-    if (uploadError) throw new Error(`Upload Failed: ${uploadError.message}`);
+    // 1. Get Pre-signed URL from Proxy
+    const { data: { url: presignedUrl } } = await fetch('/api/vault', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+      },
+      body: JSON.stringify({
+        action: 'get_presigned_url',
+        payload: {
+          key: s3Path,
+          fileType: 'application/octet-stream' // Encrypted files are binary
+        }
+      })
+    }).then(res => res.json());
+
+    if (!presignedUrl) throw new Error("Failed to get pre-signed upload URL");
+
+    // 2. Upload directly to S3
+    const s3UploadRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      body: encryptedBlob,
+      headers: { 'Content-Type': 'application/octet-stream' }
+    });
+
+    if (!s3UploadRes.ok) throw new Error(`S3 Upload Failed: ${s3UploadRes.statusText}`);
 
     onProgress(95);
     const { error: dbError } = await supabase.from('videos').insert({
@@ -276,7 +300,7 @@ export const storageService = {
       city: city.trim(),
       uploadDate: date,
       fileSize: file.size,
-      bucketUrl: `${bucketName}/${s3Path}`,
+      bucketUrl: `https://${import.meta.env.VITE_S3_ENDPOINT?.replace('https://', '')}/fuckicevault/${s3Path}`,
       s3Path,
       encryptedKeyPayload: dbKeyPayload,
       recoveryKey: Array.from(new Uint8Array(exportedRaw)).map(b => b.toString(16).padStart(2, '0')).join(''),
@@ -401,20 +425,29 @@ export const storageService = {
       throw dbErr; // Re-throw to prevent storage deletion if DB fails
     }
 
-    // 2. Delete from Storage (only if database deletion succeeded)
+    // 2. Delete from S3 via Proxy (only if database deletion succeeded)
     try {
-      const { error: storageError } = await supabase.storage.from(bucketName).remove([s3Path]);
+      const deleteRes = await fetch('/api/vault', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          action: 'delete_object',
+          payload: { key: s3Path }
+        })
+      });
 
-      if (storageError) {
-        console.error(`[Vault] Storage deletion error:`, storageError);
-        console.warn(`[Vault] WARNING: Database record was deleted but storage file may still exist.`);
-        throw new Error(`Storage deletion failed: ${storageError.message}`);
+      if (!deleteRes.ok) {
+        const errData = await deleteRes.json();
+        throw new Error(errData.error || `S3 deletion failed: ${deleteRes.statusText}`);
       }
 
-      console.log(`[Vault] ✓ Storage file purged successfully.`);
+      console.log(`[Vault] ✓ S3 file purged successfully via proxy.`);
     } catch (storageErr: any) {
-      console.error(`[Vault] Storage deletion error:`, storageErr);
-      throw new Error(`Storage deletion failed after DB deletion: ${storageErr.message}`);
+      console.error(`[Vault] S3 deletion error:`, storageErr);
+      throw new Error(`S3 deletion failed after DB deletion: ${storageErr.message}`);
     }
 
     console.log(`[Vault] ✓ Auto-Destruct complete. Both database and storage purged.`);
@@ -476,7 +509,7 @@ export const storageService = {
         }
       } catch (e) { return null; }
 
-      const { data: { publicUrl } } = supabase.storage.from(row.is_legacy ? 'video_vault' : 'fuckicevault').getPublicUrl(row.s3_path);
+      const s3Url = `https://${import.meta.env.VITE_S3_ENDPOINT?.replace('https://', '')}/fuckicevault/${row.s3_path}`;
 
       return {
         id: row.id,
@@ -486,7 +519,7 @@ export const storageService = {
         city: meta.city || 'Unknown',
         uploadDate: meta.upload_date || 'Unknown',
         fileSize: row.file_size || 0,
-        bucketUrl: publicUrl,
+        bucketUrl: s3Url,
         s3Path: row.s3_path,
         encryptedKeyPayload: row.encrypted_aes_key,
         status: 'completed',
