@@ -1,5 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.370.0";
-import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.370.0";
+import { S3Client } from "https://deno.land/x/s3_lite_client@0.7.0/mod.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -15,42 +14,42 @@ Deno.serve(async (req) => {
 
     try {
         const { action, payload } = await req.json();
-        console.log(`[Vault-Proxy] action: ${action}`);
 
-        // 2. Initialize S3 Client from Secrets
+        // 2. Secret validation (Must be set in Environment Variables)
+        const accessKeyId = Deno.env.get('HETZNER_S3_ACCESS_KEY_ID');
+        const secretAccessKey = Deno.env.get('HETZNER_S3_SECRET_ACCESS_KEY');
+
+        if (!accessKeyId || !secretAccessKey) {
+            throw new Error("SECURE_KEYS_MISSING: Ensure S3 keys are set in environment variables.");
+        }
+
+        // 3. Initialize Lightweight S3 Client
         const s3Client = new S3Client({
-            region: Deno.env.get('VITE_S3_REGION') || 'nbg1',
-            endpoint: Deno.env.get('VITE_S3_ENDPOINT'),
-            credentials: {
-                accessKeyId: Deno.env.get('HETZNER_S3_ACCESS_KEY_ID')!,
-                secretAccessKey: Deno.env.get('HETZNER_S3_SECRET_ACCESS_KEY')!,
-            },
-            forcePathStyle: true,
+            endPoint: "nbg1.your-objectstorage.com",
+            region: "nbg1",
+            useSSL: true,
+            accessKey: accessKeyId,
+            secretKey: secretAccessKey,
         });
 
+        const BUCKET_NAME = "fuckicevault";
         let result;
 
         switch (action) {
-            case 'ping':
-                result = { message: 'pong', timestamp: new Date().toISOString() };
-                break;
-
             case 'get_presigned_url':
-                const command = new PutObjectCommand({
-                    Bucket: 'fuckicevault',
-                    Key: payload.key,
-                    ContentType: payload.fileType || 'application/octet-stream',
+                // Generate a PUT URL for uploading
+                const url = await s3Client.getPresignedUrl("PUT", payload.key, {
+                    bucketName: BUCKET_NAME,
+                    expirySeconds: 3600
                 });
-                const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
                 result = { url };
                 break;
 
             case 'delete_object':
-                const deleteCommand = new DeleteObjectCommand({
-                    Bucket: 'fuckicevault',
-                    Key: payload.key,
+                // Perform S3 deletion
+                await s3Client.deleteObject(payload.key, {
+                    bucketName: BUCKET_NAME
                 });
-                await s3Client.send(deleteCommand);
                 result = { success: true };
                 break;
 
@@ -67,8 +66,8 @@ Deno.serve(async (req) => {
         console.error(`[Vault-Proxy] error: ${error.message}`);
         return new Response(JSON.stringify({
             error: error.message,
-            stack: error.stack,
-            hint: "Check if all secrets (HETZNER_S3_ACCESS_KEY_ID, HETZNER_S3_SECRET_ACCESS_KEY, VITE_S3_ENDPOINT, VITE_S3_REGION) are set in Supabase."
+            version: "v4-lite",
+            hint: "Check environment variables and bucket permissions."
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
