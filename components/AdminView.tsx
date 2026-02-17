@@ -11,10 +11,13 @@ const AdminView: React.FC = () => {
     const handlePinSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const correctPin = import.meta.env.VITE_ADMIN_PIN;
-        if (correctPin && pinInput === correctPin) {
+        const trimmedInput = pinInput.trim();
+
+        if (correctPin && trimmedInput === correctPin) {
             setIsAuthenticated(true);
             setPinError(false);
         } else {
+            console.error('Admin authentication failed. Ensure VITE_ADMIN_PIN is set in your environment.');
             setPinError(true);
             setPinInput('');
             setTimeout(() => setPinError(false), 2000);
