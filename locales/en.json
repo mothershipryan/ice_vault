@@ -81,6 +81,13 @@
     },
     "retrieval": {
         "module_label": "Passphrase or Backup Key",
+        "emergency_warning": "DO NOT LOSE YOUR PASSPHRASE OR KEY.\nWE CANNOT RESET THEM FOR YOU.",
+        "internal_access": "Internal Node Access",
+        "terminal_access": "Metrics Terminal",
+        "enter_auth_code": "Enter Authorization Code",
+        "invalid_code": "INVALID ACCESS CODE",
+        "authorize": "Authorize Access",
+        "exit_dashboard": "Terminal Exit",
         "module_placeholder": "ENTER PASSPHRASE OR EMERGENCY KEY",
         "target_parameters": "Target node parameters",
         "scanning": "Scanning Nodes...",
