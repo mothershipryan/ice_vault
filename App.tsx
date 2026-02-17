@@ -332,12 +332,12 @@ const App: React.FC = () => {
                             onChange={(e) => setPassphrase(e.target.value)}
                             placeholder={t('app.passphrase_placeholder')}
                             disabled={status === AppStatus.UPLOADING}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 pr-12 text-sm text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-[11px] sm:text-sm"
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 pr-14 text-sm text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 font-bold focus:outline-none focus:border-blue-500 transition-all uppercase tracking-widest text-[11px] sm:text-sm"
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassphrase(!showPassphrase)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-500 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-500 transition-colors"
                             title={showPassphrase ? "Hide Passphrase" : "Show Passphrase"}
                           >
                             {showPassphrase ? (
