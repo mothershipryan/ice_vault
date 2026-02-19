@@ -15,14 +15,16 @@ const Censorship: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const images = [
         "https://www.eff.org/files/banner_library/protest-2024-2.jpg",
         "https://static01.nyt.com/images/2026/02/12/multimedia/00biz-ice-social-media-01-bwvf/00biz-ice-social-media-01-bwvf-facebookJumbo.jpg",
-        "https://www.eff.org/files/banner_library/effector_banner_5.jpeg"
+        "https://www.eff.org/files/banner_library/effector_banner_5.jpeg",
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1000"
     ];
 
     // Static URLs mapping
     const urls = [
         "https://www.eff.org/deeplinks/2026/02/open-letter-tech-companies-protect-your-users-lawless-dhs-subpoenas?utm_source=effector",
         "https://www.nytimes.com/2026/02/13/technology/dhs-anti-ice-social-media.html?unlocked_article_code=1.MFA.X7aE.0itmiKfDD2d6&smid=nytcore-ios-share",
-        "https://www.eff.org/deeplinks/2026/02/homeland-security-wants-names-effector-383"
+        "https://www.eff.org/deeplinks/2026/02/homeland-security-wants-names-effector-383",
+        "https://www.military.com/daily-news/2026/02/17/dhs-collecting-big-tech-users-personal-data-issuing-subpoenas-ice-related-criticism.html"
     ];
 
     return (
