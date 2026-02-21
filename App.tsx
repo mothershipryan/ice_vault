@@ -13,7 +13,7 @@ import PrivacyPolicy from './components/PrivacyPolicy.tsx';
 import Censorship from './components/Censorship.tsx';
 import Footer from './components/Footer.tsx';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import AdminView from './components/AdminView.tsx';
+
 import MetricsDashboard from './components/MetricsDashboard.tsx';
 import LanguageSwitcher from './components/LanguageSwitcher.tsx';
 import { storageService } from './services/storageService.ts';
@@ -203,7 +203,7 @@ const App: React.FC = () => {
         )}
 
         <Routes>
-          <Route path="/admin" element={<AdminView />} />
+
           <Route path="*" element={
             <>
               {/* View Switcher */}
