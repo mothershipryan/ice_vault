@@ -74,6 +74,9 @@ const deriveUserIdFromPassphrase = async (passphrase: string): Promise<string> =
   const hashArray = Array.from(new Uint8Array(derivedBits));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
+  // Memory hygiene: Zero out the derived bits
+  new Uint8Array(derivedBits).fill(0);
+
   // Format as UUID for compatibility with Supabase user_id field (UUID v4 format)
   return `${hashHex.slice(0, 8)}-${hashHex.slice(8, 12)}-${hashHex.slice(12, 16)}-${hashHex.slice(16, 20)}-${hashHex.slice(20, 32)}`;
 };
@@ -187,6 +190,11 @@ const encryptFileInChunks = async (
 
     encryptedParts.push(new Blob([iv, encryptedBuffer]));
     offset += CHUNK_SIZE;
+
+    // Memory hygiene: Zero out the chunk buffer after use
+    new Uint8Array(chunkBuffer).fill(0);
+    iv.fill(0);
+
     onProgress(5 + Math.round((i / totalChunks) * 45), "Encrypting Shards...");
   }
 

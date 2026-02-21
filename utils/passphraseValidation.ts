@@ -13,8 +13,8 @@ export const validatePassphraseStrength = (passphrase: string): PassphraseStreng
     const messages: string[] = [];
 
     // Length check
-    if (passphrase.length < 12) {
-        messages.push("At least 12 characters");
+    if (passphrase.length < 16) {
+        messages.push("At least 16 characters");
     } else {
         score++;
     }
