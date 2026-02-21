@@ -73,7 +73,7 @@
         "description": "Descripción",
         "timestamp": "Marca de Tiempo",
         "about_title": "Acerca de I.C.E. Vault",
-        "about_p1": "ICE Vault es una aplicación web diseñada para servir como un testigo digital de alta integridad. Al proporcionar la carga directa a la nube para grabaciones de video, la aplicación asegura que el video crítico sea capturado y asegurado al instante. Esta arquitectura está construida específicamente para prevenir la pérdida local o la destrucción física de la evidencia, mientras admite protocolos de 'Quemar después de Leer' para asegurar que no haya retención de datos residuales una vez que la evidencia esté asegurada.",
+        "about_p1": "ICE Vault is a web application designed to serve as a high-integrity digital witness. By providing direct-to-cloud upload for video recordings, the app ensures that critical footage is captured and secured instantly. This architecture is built specifically to prevent the local loss or physical destruction of evidence, while supporting 'Burn After Reading' protocols to ensure zero residual data retention once evidence is secured.",
         "about_p2": "Garantizamos la **privacidad de conocimiento cero** aprovechando la **infraestructura alemana**, reconocida por sus robustas leyes de protección de datos. Todos los datos son procesados por **Supabase** y asegurados a través de **proveedores europeos de alta seguridad** en servidores ubicados físicamente en **Alemania**.",
         "about_p3": "**Protocolo de Recuperación:** Los archivos pueden ser recuperados a través de nuestra **Terminal de Recuperación Europea**. Use el Estado, Ciudad y Fecha de captura para localizar la evidencia cifrada. Cada archivo está asegurado con un **Hash SHA-256** único para verificación legal, asegurando que el video permanezca inalterado, verificado matemáticamente y sea admisible como evidencia lista para los tribunales.",
         "jurisdiction_label": "JURISDICCIÓN DE PRIVACIDAD DE DE / UE // EVIDENCIA VERIFICABLE",
@@ -234,7 +234,7 @@
             "title": "Android (Chrome)",
             "subtitle": "Pixel, Samsung, etc.",
             "steps": [
-                "Toque los **tres puntos verticales** (Menú) en la esquina superior derecha de Chrome.",
+                "Toque los **tres puntos verticales** (Menú) in la esquina superior derecha de Chrome.",
                 "Seleccione **'Instalar aplicación'** o **'Agregar a la pantalla de inicio'**.",
                 "Confirme tocando **'Instalar'** o **'Agregar'**."
             ]
@@ -246,6 +246,7 @@
         "privacy": "Privacidad",
         "censorship": "Censura",
         "stickers": "Calcomanías",
+        "stats": "Métricas",
         "install_mobile": "Instalar App Móvil"
     }
 }

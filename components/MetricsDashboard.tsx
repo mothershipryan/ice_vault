@@ -9,7 +9,7 @@ interface MetricsData {
     recentLogs: any[];
 }
 
-const MetricsDashboard: React.FC = () => {
+const MetricsDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const { t, i18n } = useTranslation();
     const [metrics, setMetrics] = useState<MetricsData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -76,7 +76,7 @@ const MetricsDashboard: React.FC = () => {
 
     if (loading) return (
         <div className="flex justify-center items-center p-12 transition-colors">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
     );
 
@@ -87,16 +87,20 @@ const MetricsDashboard: React.FC = () => {
     );
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="border-b border-red-500/30 pb-4 transition-colors">
-                <h2 className="text-2xl font-bold text-red-500 tracking-tight flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse transition-colors"></span>
+        <div className="w-full max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="flex items-center gap-4 mb-6">
+                <button
+                    onClick={onBack}
+                    className="p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-widest uppercase truncate border-b-2 border-blue-500 pb-1 transition-colors">
                     {t('app.metrics_title')}
                 </h2>
-                <p className="text-zinc-500 text-sm mt-1 uppercase tracking-widest font-mono transition-colors">
-                    {t('app.internal_access')}
-                </p>
-            </header>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/20 border border-zinc-500/20 p-6 rounded-xl backdrop-blur-sm transition-colors duration-300">

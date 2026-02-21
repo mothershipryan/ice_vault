@@ -7,9 +7,10 @@ interface FooterProps {
     onPrivacyClick: () => void;
     onCensorshipClick: () => void;
     onInstallClick: () => void;
+    onStatsClick: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onInstallClick }) => {
+const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onInstallClick, onStatsClick }) => {
     const { t } = useTranslation();
 
     return (
@@ -63,6 +64,12 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
                     >
                         {t('footer.censorship')}
+                    </button>
+                    <button
+                        onClick={onStatsClick}
+                        className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
+                    >
+                        {t('footer.stats')}
                     </button>
                     <a
                         href="/12xstickers.pdf"

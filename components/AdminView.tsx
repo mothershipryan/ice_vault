@@ -27,7 +27,7 @@ const AdminView: React.FC = () => {
     if (isAuthenticated) {
         return (
             <div className="animate-in slide-in-from-bottom-4 duration-500">
-                <MetricsDashboard />
+                <MetricsDashboard onBack={() => setIsAuthenticated(false)} />
             </div>
         );
     }
