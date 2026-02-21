@@ -72,7 +72,7 @@ const Footer: React.FC<FooterProps> = ({ onPrivacyClick, onCensorshipClick, onIn
                         {t('footer.stats')}
                     </button>
                     <a
-                        href="/12xstickers.pdf"
+                        href="/stickers.pdf"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
