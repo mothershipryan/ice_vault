@@ -219,7 +219,6 @@ export const storageService = {
     onProgress(1, "Deriving Identity...");
     // Derive a deterministic user ID from the passphrase
     const derivedUserId = await deriveUserIdFromPassphrase(passphrase);
-    console.log(`[Vault] Using passphrase-derived user ID: ${derivedUserId.slice(0, 8)}...`);
 
     onProgress(5, "Generating Session Keys...");
     const secretKey = await generateAESKey();
@@ -510,7 +509,6 @@ export const storageService = {
 
     // Derive a deterministic user ID from the passphrase
     const derivedUserId = await deriveUserIdFromPassphrase(trimmedPass);
-    console.log(`[Vault] Searching for records... Passphrase-derived user ID: ${derivedUserId.slice(0, 8)}...`);
 
     const [v2Resp, v1Resp] = await Promise.all([
       supabase.from('videos').select('*').eq('user_id', derivedUserId),
