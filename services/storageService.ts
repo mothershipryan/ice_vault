@@ -362,6 +362,11 @@ export const storageService = {
         const decryptedBuffer = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, ciphertext);
         decryptedParts.push(new Blob([decryptedBuffer]));
         offset += currentPartSize;
+
+        // Memory hygiene: Zero out sensitive buffers
+        new Uint8Array(chunkBuffer).fill(0);
+        new Uint8Array(decryptedBuffer).fill(0);
+
         if (onProgress) onProgress(Math.round((offset / encryptedBlob.size) * 100));
       }
       return new Blob(decryptedParts, { type: finalMime });
